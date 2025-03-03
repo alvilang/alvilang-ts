@@ -1,5 +1,12 @@
 import { writeFile } from 'fs';
-import { Trace, ITraceStep, StateVariable, StateVariableType, VariableStep, OperationStep } from './types';
+import {
+  Trace,
+  ITraceStep,
+  StateVariable,
+  StateVariableType,
+  VariableStep,
+  OperationStep
+} from './types';
 
 /*
 TODO:
@@ -8,35 +15,14 @@ TODO:
 */
 
 export default class ArrayLogger {
-  public type: string;
   public trace: Trace<any>;
   private nextId: number;
   private currentDepth: number;
 
-  public constructor(structure: any[]) {
+  public constructor() {
     this.currentDepth = 0;
     this.nextId = 0;
-    this.type = "Array";
-    this.trace = { steps: [
-        {
-          structure: JSON.parse(JSON.stringify(structure)),
-          type: "Array",
-          state : []
-        }
-      ]
-    };
-  }
-
-  public print() {
-    console.log('ArrayLogger {')
-    console.log('   nextId:',this.nextId)
-    console.log('   type:',this.type)
-    console.log('   trace: { steps: [')
-    for (let i = 0; i < this.trace.steps.length; i++) {
-      console.log(' ',this.trace.steps[i])
-    }
-    console.log(']')
-    console.log('}')
+    this.trace = { steps: [] };
   }
 
   public write(logFile: string = 'log.json') {
@@ -51,55 +37,34 @@ export default class ArrayLogger {
     const { [key]: _, ...rest } = obj;
     return rest as Omit<T, K>;
   }
-  
+
   //target: StateVariable<any>
   private createProxy(target: any): any {
     return new Proxy(target, {
       set(obj, key, value) {
-
         //copy previous state and update value of this variable
         const [prevStep, currentStepList] = target.log.getPreviousStep();
 
         const copiedList = [...prevStep.state]; // copy everything even the pointers
-        const index = copiedList.findIndex(item => item.id === target.id); // find the index of the item you want to change
-        copiedList[index] = JSON.parse(JSON.stringify(target.log.omitKey(copiedList[index], 'log'))); // copy the shits so that its modiifable without changing the original
+        const index = copiedList.findIndex((item) => item.id === target.id); // find the index of the item you want to change
+        copiedList[index] = JSON.parse(
+          JSON.stringify(target.log.omitKey(copiedList[index], 'log'))
+        ); // copy the shits so that its modiifable without changing the original
         copiedList[index].value = JSON.parse(JSON.stringify(value)); // change the bish
 
-        /*
-        const copiedList = state.map((item =>
-          //looking for 'this' item
-          if (item.id == target.id)
-            return JSON.parse(JSON.stringify(item));
-          else
-            return item;)
-        );
-        */
 
-        /*
-        const newState: StateVariable<any>[] = [];
-        for(let i = 0; i < state.length; i++) {
-          let currentVar = state[i];
-          if (currentVar.id == target.id) {
-            newState.push(StateVariable<any> {})
-          }
-        }
-
-        //state.find((item: StateVariable<any>) => item.name === target.name).value = value;  //deepcopy value?
-        //steps[steps.length-1].state.find((item: StateVariable<any>) => item.name === target.name).value = value;  //deepcopy value?
-        */
-        
         console.log('Setting', key, 'to', value);
-        
+
         const assignmentStep: VariableStep<any> = {
-          structure: target.log.previousStructure(),  //prevStep.structure?
-          type:'Assignment',
+          structure: prevStep.structure, //prevStep.structure?
+          type: 'Assignment',
           state: copiedList,
           variableId: target.id,
           value: copiedList[index].value
         };
 
         currentStepList.push(assignmentStep);
-        
+
         return Reflect.set(obj, key, value);
       },
       get(obj, key) {
@@ -108,10 +73,6 @@ export default class ArrayLogger {
         return value;
       }
     });
-  }
-
-  private previousStructure(): any {
-    return JSON.parse(JSON.stringify(this.trace.steps[this.trace.steps.length-1].structure));
   }
 
   private getNextId(): number {
@@ -124,22 +85,24 @@ export default class ArrayLogger {
     name?: string
   ): StateVariable<T> {
     const state: StateVariable<T> = {
-      id:    this.getNextId(),
-      type:  type,
+      id: this.getNextId(),
+      type: type,
       value: JSON.parse(JSON.stringify(initialValue)),
-      log:   this
+      log: this
     };
 
-    if (name) {state.name = name;}
+    if (name) {
+      state.name = name;
+    }
 
     const stateProxy = this.createProxy(state);
     const [prevStep, currentStepList] = this.getPreviousStep();
     const step: VariableStep<T> = {
-      structure:  prevStep.structure,
-      type:       'Declaration',
-      state:      [...prevStep.state, this.omitKey(state, 'log')], // left one is a list right one is local
+      structure: prevStep.structure,
+      type: 'Declaration',
+      state: [...prevStep.state, this.omitKey(state, 'log')], // left one is a list right one is local
       variableId: state.id,
-      value:      state.value
+      value: state.value
     };
 
     currentStepList.push(step);
@@ -147,17 +110,16 @@ export default class ArrayLogger {
     return stateProxy;
   }
 
-  
   private getPreviousStep(): [ITraceStep<any>, ITraceStep<any>[]] {
     let stepList: ITraceStep<any>[] = this.trace.steps;
-    let step: ITraceStep<any> = stepList[stepList.length-1]
+    let step: ITraceStep<any> = stepList[stepList.length - 1];
     let tmp: OperationStep<any> = step as OperationStep<any>;
     let depth = this.currentDepth;
 
     while (depth > 0 && tmp.substeps) {
-      stepList = tmp.substeps
+      stepList = tmp.substeps;
       if (tmp.substeps.length > 0) {
-        step = stepList[stepList.length-1];
+        step = stepList[stepList.length - 1];
         tmp = step as OperationStep<any>;
       } else {
         break;
@@ -169,7 +131,7 @@ export default class ArrayLogger {
   }
 
   public mark(block: () => void, ...vars: StateVariable<any>[]): void {
-    const newVars: string[] = vars.map(v => v.id+'');
+    const newVars: string[] = vars.map((v) => v.id + '');
     const [prevStep, currentStepList] = this.getPreviousStep();
 
     const step: OperationStep<any> = {
@@ -187,10 +149,6 @@ export default class ArrayLogger {
     block();
     this.currentDepth--;
 
-
-    console.log('markstep', step)
+    console.log('markstep', step);
   }
-
 }
-
-
