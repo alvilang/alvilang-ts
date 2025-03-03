@@ -25,20 +25,25 @@
     "prepare": "husky",
     "semantic-release": "semantic-release",
     "lint": "npm run lint:scripts && npm run lint:styles",
-    "lint:scripts": "",
+    "lint:scripts": "eslint .",
     "lint:styles": "prettier --check .",
-    "format-code": "prettier . --write"
+    "lint:fix": "npm run lint:scripts:fix && npm run lint:styles:fix",
+    "lint:scripts:fix": "eslint --fix .",
+    "lint:styles:fix": "prettier . --write"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.0",
     "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.21.0",
     "@semantic-release/github": "^11.0.1",
     "@types/node": "^22.13.4",
+    "eslint": "^9.21.0",
     "husky": "^9.1.7",
     "prettier": "^3.4.1",
     "semantic-release": "^24.2.3",
     "ts-node": "^10.9.2",
     "tsup": "^8.3.6",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0"
   }
 }
