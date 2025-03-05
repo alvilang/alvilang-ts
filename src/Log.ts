@@ -95,40 +95,115 @@ Example with L1:
     ]
 }
 
+function insertionSort(array: number[]) {
+  for (let i = 1; i < array.length; i++) {
+    let j = i;
+    while (j > 0 && array[j - 1] > array[j]) {
+      let tmp = array[j];
+      array[j] = array[j - 1];
+      array[j - 1] = tmp;
+      j--;
+    }
+  }
+}
+
+const log = new Log();
+let array = log.createArray([3,2,1]);
+insertionSort(array);
+
 */
 
+import { writeFile } from 'fs';
 import Stack from './lib/Stack';
 import LoggedArray from './LoggedArray';
-import { TraceStep, StateVariableType, Trace, StateVariable, StateDump, NewScope } from './types';
+import { TraceStep, StateVariableType, Trace, StateVariable, StateDump, NewScope, LogVariable } from './types';
+import LoggedIndex from './LoggedIndex';
 
 export default class Log {
   private trace: Trace = { steps: [] };
   private scopes = new Stack<NewScope>();
-  private currentState: TraceStep['state'] = [];
+  private currentState = new Stack<LogVariable<unknown>[]>;
+  private nextId: number = 0;
 
-  public constructor() {}
 
-  private getLogDestination(): TraceStep[] {
-    const currentScope = this.scopes.peek();
-    return currentScope === undefined ? this.trace.steps : currentScope.subSteps;
+  public constructor() {
+    this.currentState.push([]);
   }
 
-  private logStep(value: StateVariable<unknown>) {
+  public getNextId(): number {
+    return this.nextId++;
+  }
+
+  private getLogDestination(): TraceStep[] {
+    return this.scopes.isEmpty() ? this.trace.steps : this.scopes.peek().subSteps;
+  }
+
+  public write(logFile: string = 'log.json') {
+    writeFile(logFile, JSON.stringify(this.trace, null, 2), (err) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+  }
+
+
+  public logChange<T>(id: number, newValue: T): void {
+    //find var with id
+    const iterator = this.currentState.iterator();
+
+    //update its value
+    const update = () => {
+      let logVarArray =  iterator.next();
+      while (!logVarArray.done) {
+        for (const logVar of logVarArray.value) {
+          if (logVar.id == id) {
+            logVar.value = newValue;
+            return;
+          }
+        }
+        logVarArray = iterator.next();
+      }
+    }
+    update();
+
+    //log step
+    this.logStep();
+  }
+
+  private toStateVariable<T>(logVar: LogVariable<T>): StateVariable<T> {
+    //deconstructing logVar to retrieve StateVariable
+    const { id, ...stateVar } = logVar;
+    return stateVar;
+  }
+
+  private logStep(value?: StateVariable<unknown>) {
     const logDestination = this.getLogDestination();
-    
+    const iterator = this.currentState.iterator();
+    const finalState: StateVariable<unknown>[] = [];
+
+    let logVarArray = iterator.next();
+
+    while (!logVarArray.done) {
+      logVarArray.value.forEach(logVar => finalState.push(this.toStateVariable(logVar)));
+      logVarArray = iterator.next();
+    }
+    if (value) {finalState.push(value);}
+
+    console.log(finalState);
+
     const step: StateDump = {
       type: 'StateDump',
-      state: ;
-    }
+      state: finalState
+    };
 
-
+    logDestination.push(step);
   }
 
   /*
   var: a
   var: b
 
-  // New scope
+  // New scope  //immutablelinkedlist...
     var: a
     var: b
     var: c
@@ -139,33 +214,52 @@ export default class Log {
   var: b
   */
 
-  private startScope(name?: string) {
+  public startScope(name?: string) {
     this.scopes.push({ type: "NewScope", name, subSteps: [] });
+    this.currentState.push([]);
   }
 
-  private endScope() {
+  public endScope() {
     const currentScope = this.scopes.pop();
 
-    if (currentScope === undefined) {
-      throw new Error('No scope to end');
-    }
-
-    const parentScope = this.scopes.peek();
-
-    if (parentScope !== undefined) {
-      parentScope.subSteps.push(currentScope);
+    if (this.scopes.isEmpty()) {
+        this.trace.steps.push(currentScope);
     } else {
-      this.trace.steps.push(currentScope);
+        this.scopes.peek().subSteps.push(currentScope);
     }
+
+    this.currentState.pop();
   }
 
   public createArray<T>(array: T[]): LoggedArray<T> {
-    this.logStep({
+    const id = this.getNextId();
+    const stateVar: StateVariable<unknown> = {
       type: StateVariableType.STATIC,
       value: [...array]
-    });
+    };
 
-    return new LoggedArray<T>(array, this);
+    const logVar: LogVariable<unknown> = {...stateVar, id};
+
+    this.logStep(stateVar);
+    this.currentState.peek().push(logVar);
+
+    return new LoggedArray<T>(array, id, this);
+  }
+
+  public createVar<T>(type: StateVariableType, value: T, origin?: number): LoggedIndex<T> {
+    const id = this.getNextId();
+    const stateVar: StateVariable<unknown> = {
+      origin,
+      type,
+      value 
+    };
+
+    const logVar: LogVariable<unknown> = {...stateVar, id};
+
+    this.logStep(stateVar);
+    this.currentState.peek().push(logVar);
+
+    return new LoggedIndex<T>(value, id, this);
   }
 }
 

@@ -11,12 +11,14 @@ export enum StateVariableType {
 
 export type StateVariable<T> = {
   name?: string;
+  origin?: number;
   type: StateVariableType;
   value: T;
 };
 
-export type LogVariable<T> = StateVariable<T> & {
-  log: Log;
+export type LogVariable<T> =
+  StateVariable<T> & {
+  id: number;
 };
 
 

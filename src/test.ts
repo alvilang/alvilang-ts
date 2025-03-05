@@ -1,8 +1,9 @@
-import ArrayLogger from './ArrayLogger';
+import Log from './Log';
+import LoggedArray from './LoggedArray';
 import { StateVariableType } from './types';
 
 //const log = new Logger();
-
+/*
 function minimum(arr: number[], arrlog: ArrayLogger): number {
   if (arr.length == 0) throw new Error('list is empty');
 
@@ -38,39 +39,59 @@ function minimum2(arr: number[]): number {
 
   return minIndex;
 }
+*/
 
-const arr: number[] = [1, 2, 3];
-const arrlog = new ArrayLogger(arr);
-console.log(minimum(arr, arrlog)); //arr.createIndex()
-arrlog.write('log2.json');
+const log = new Log();
+let array = log.createArray([3,2,1]);   
+array.swap(0,2);  //[1,2,3]
+array.swap(0,1);  //[2,1,3]
+let array2 = log.createArray([5,6,7]);  
+array.swap(0,2);  //[3,1,2]
 
-const arr2: number[] = [3, 2, 1];
-const arrlog2 = new ArrayLogger(arr2);
-console.log(minimum(arr2, arrlog2)); //arr.createIndex()
-arrlog2.write('log3.json');
+log.startScope('Test');
+log.endScope();
 
-function replacer(key: string, value: any) {
-  if (value instanceof Map) {
-    return {
-      dataType: 'Map',
-      value: Array.from(value.entries()) // or with spread: value: [...value]
-    };
-  } else {
-    return value;
-  }
-}
-function reviver(key: string, value: any) {
-  if (typeof value === 'object' && value !== null) {
-    if (value.dataType === 'Map') {
-      return new Map(value.value);
+log.startScope('Test 2');
+  log.createArray([9]);
+  array2.swap(0,1); //[6,5,7]
+log.endScope();
+
+log.createArray([10]);
+
+log.startScope('Test 3');
+  log.startScope('Test 4');
+    log.createArray([11]);
+  log.endScope();
+  log.startScope('Test 5');
+    log.createArray([12]);
+  log.endScope();
+log.endScope();
+
+log.createArray([13]);
+
+log.write();
+
+
+
+function insertionSort<T>(array: LoggedArray<T>) {
+  for (let i = array.createIndex(1); i.get() < array.length; i.set(i.get() + 1)) {
+
+    array.scope(() => {
+    let j = array.createIndex(i.get());
+    while (j.get() > 0 && array.get(j.get() - 1) > array.get(j.get())) {
+      array.swap(j.get()-1,j.get());
+      j.set(j.get()-1);
     }
+    });
   }
-  return value;
 }
 
-const test: Map<string, number> = new Map();
 
-test.set('1', 2);
+const log2 = new Log();
+let array3 = log2.createArray([3,2,1]);
+insertionSort(array3);
 
-console.log('hello');
-console.log(JSON.parse(JSON.stringify(test, replacer), reviver));
+
+log2.write('log2.json')
+
+
