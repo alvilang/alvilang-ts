@@ -25,11 +25,11 @@ import LoggedIndex from './LoggedIndex';
 export default class Logger {
   private trace: Trace = { steps: [] };
   private scopes = new Stack<Scope>();
-  private currentState = new Stack<LogVariable<unknown>[]>();
+  private scopedStates = new Stack<LogVariable<unknown>[]>();
   private nextId: number = 0;
 
   public constructor() {
-    this.currentState.push([]);
+    this.scopedStates.push([]);
   }
 
   public getNextId(): number {
@@ -57,7 +57,7 @@ export default class Logger {
   }
 
   private updateVar<T>(id: number, newValue: T): void {
-    for (const logVarArray of this.currentState) {
+    for (const logVarArray of this.scopedStates) {
       for (const logVar of logVarArray) {
         if (logVar.id == id) {
           logVar.value = newValue;
@@ -77,7 +77,7 @@ export default class Logger {
     const logDestination = this.getLogDestination();
     const finalState: StateVariable<unknown>[] = [];
 
-    for (const logVarArray of this.currentState) {
+    for (const logVarArray of this.scopedStates) {
       logVarArray.forEach((logVar) => finalState.push(this.toStateVariable(logVar)));
     }
     
@@ -97,7 +97,7 @@ export default class Logger {
 
   public startScope(name?: string) {
     this.scopes.push({ type: 'Scope', name, subSteps: [] });
-    this.currentState.push([]);
+    this.scopedStates.push([]);
   }
 
   public endScope() {
@@ -109,7 +109,7 @@ export default class Logger {
       this.scopes.peek().subSteps.push(currentScope);
     }
 
-    this.currentState.pop();
+    this.scopedStates.pop();
   }
 
   public createArray<T>(array: T[]): LoggedArray<T> {
@@ -122,7 +122,7 @@ export default class Logger {
     const logVar: LogVariable<unknown> = { ...stateVar, id };
 
     this.logStep(stateVar);
-    this.currentState.peek().push(logVar);
+    this.scopedStates.peek().push(logVar);
 
     return new LoggedArray<T>(array, id, this);
   }
@@ -138,7 +138,7 @@ export default class Logger {
     const logVar: LogVariable<unknown> = { ...stateVar, id };
 
     this.logStep(stateVar);
-    this.currentState.peek().push(logVar);
+    this.scopedStates.peek().push(logVar);
 
     return new LoggedIndex<T>(value, id, this);
   }

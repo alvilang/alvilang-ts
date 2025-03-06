@@ -7,46 +7,42 @@ import { StateVariableType } from './types';
  * all changes
  */
 export default class LoggedArray<T> {
-  private log: Logger;
+  private logger: Logger;
   private array: T[];
   private id: number;
   public readonly length;
 
-  public constructor(array: T[], id: number, log: Logger) {
+  public constructor(array: T[], id: number, logger: Logger) {
     this.id = id;
-    this.log = log;
+    this.logger = logger;
     this.array = [...array];
     this.length = array.length;
   }
 
-  
   public scope(body: () => void, name?: string): void {
-    this.log.startScope(name);
+    this.logger.startScope(name);
     body();
-    this.log.endScope();
+    this.logger.endScope();
   }
-
 
   //LoggedIndex alternatives too
   public swap(i: number, j: number): void {
     [this.array[i], this.array[j]] = [this.array[j], this.array[i]];
 
     //update log
-    this.log.logChange(this.id, [...this.array]);
+    this.logger.logChange(this.id, [...this.array]);
   }
 
-  
   public set(index: number, value: T): void {
     this.array[index] = value;
-    this.log.logChange(this.id, [...this.array]);
+    this.logger.logChange(this.id, [...this.array]);
   }
 
-  //To simulate using numeric variables as they are, arr.get(i) instead of arr.get(i.value) ...
+  //Add proxy/loggedIndex union to simulate using numeric variables
+  //as they are, arr.get(i) instead of arr.get(i.value) ...
   public get(index: number): T {
     return this.array[index];
   }
-
-
 
   /*
   Splits the array into two arrays where the first array contains
@@ -61,6 +57,8 @@ export default class LoggedArray<T> {
   //LoggedIndex alternative too
   */
   public split(i: number): [LoggedArray<T>, LoggedArray<T>] {
+    //TODO:
+
     if (i < 0 || this.array.length <= i) {
       throw new RangeError();
     }
@@ -70,23 +68,18 @@ export default class LoggedArray<T> {
     const arr1 = this.array.slice(0, i);
     const arr2 = this.array.slice(i);
     const split: [LoggedArray<T>, LoggedArray<T>] = [
-      this.log.createArray(arr1),
-      this.log.createArray(arr2)
+      this.logger.createArray(arr1),
+      this.logger.createArray(arr2)
     ];
 
     return split;
   }
 
-
-  
   public createIndex(i: number): LoggedIndex<number> {
     if (i < 0 || this.array.length <= i) {
       throw new RangeError();
     }
 
-    return this.log.createVar(StateVariableType.POINTER, i, this.id);
+    return this.logger.createVar(StateVariableType.POINTER, i, this.id);
   }
-  
-
-
 }
