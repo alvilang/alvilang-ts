@@ -50,25 +50,21 @@ export default class Logger {
 
   public logChange<T>(id: number, newValue: T): void {
     //find var with id
-    const iterator = this.currentState.iterator();
-
     //update its value
-    const update = () => {
-      let logVarArray = iterator.next();
-      while (!logVarArray.done) {
-        for (const logVar of logVarArray.value) {
-          if (logVar.id == id) {
-            logVar.value = newValue;
-            return;
-          }
-        }
-        logVarArray = iterator.next();
-      }
-    };
-    update();
-
+    this.updateVar(id, newValue);
     //log step
     this.logStep();
+  }
+
+  private updateVar<T>(id: number, newValue: T): void {
+    for (const logVarArray of this.currentState) {
+      for (const logVar of logVarArray) {
+        if (logVar.id == id) {
+          logVar.value = newValue;
+          return;
+        }
+      }
+    }
   }
 
   private toStateVariable<T>(logVar: LogVariable<T>): StateVariable<T> {
@@ -79,15 +75,12 @@ export default class Logger {
 
   private logStep(value?: StateVariable<unknown>) {
     const logDestination = this.getLogDestination();
-    const iterator = this.currentState.iterator();
     const finalState: StateVariable<unknown>[] = [];
 
-    let logVarArray = iterator.next();
-
-    while (!logVarArray.done) {
-      logVarArray.value.forEach((logVar) => finalState.push(this.toStateVariable(logVar)));
-      logVarArray = iterator.next();
+    for (const logVarArray of this.currentState) {
+      logVarArray.forEach((logVar) => finalState.push(this.toStateVariable(logVar)));
     }
+    
     if (value) {
       finalState.push(value);
     }

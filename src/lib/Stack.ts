@@ -22,7 +22,7 @@ export default class Stack<T> {
   public pop(): T {
     const popped = this.storage.pop();
     if (popped === undefined) {
-        throw new Error('Stack is empty');
+      throw new Error('Stack is empty');
     }
 
     return popped;
@@ -32,7 +32,7 @@ export default class Stack<T> {
     return this.storage[this.size() - 1];
   }
 
-  public iterator(): ArrayIterator<T> {
+  [Symbol.iterator](): ArrayIterator<T> {
     return this.storage.values();
   }
 }
