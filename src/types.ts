@@ -1,4 +1,4 @@
-import Log from './Log';
+import Logger from './Logger';
 
 // export type PointerVariable = {
 //   owner: unknown

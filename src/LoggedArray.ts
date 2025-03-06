@@ -1,4 +1,4 @@
-import Log from './Log';
+import Logger from './Logger';
 import LoggedIndex from './LoggedIndex';
 import { StateVariableType } from './types';
 
@@ -7,12 +7,12 @@ import { StateVariableType } from './types';
  * all changes
  */
 export default class LoggedArray<T> {
-  private log: Log;
+  private log: Logger;
   private array: T[];
   private id: number;
   public readonly length;
 
-  public constructor(array: T[], id: number, log: Log) {
+  public constructor(array: T[], id: number, log: Logger) {
     this.id = id;
     this.log = log;
     this.array = [...array];

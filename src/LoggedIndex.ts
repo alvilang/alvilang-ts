@@ -1,13 +1,13 @@
-import Log from "./Log";
+import Logger from "./Logger";
 
 
 
 export default class LoggedIndex<T> {
   private value: T;
-  private log: Log;
+  private log: Logger;
   private id: number;
 
-  public constructor (initialValue: T, id: number, log: Log) {
+  public constructor (initialValue: T, id: number, log: Logger) {
     this.value = initialValue;
     this.log = log;
     this.id = id;

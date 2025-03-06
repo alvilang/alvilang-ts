@@ -1,4 +1,4 @@
-import Log from './Log';
+import Logger from './Logger';
 import LoggedArray from './LoggedArray';
 import { StateVariableType } from './types';
 
@@ -41,7 +41,7 @@ function minimum2(arr: number[]): number {
 }
 */
 
-const log = new Log();
+const log = new Logger();
 let array = log.createArray([3,2,1]);   
 array.swap(0,2);  //[1,2,3]
 array.swap(0,1);  //[2,1,3]
@@ -87,7 +87,7 @@ function insertionSort<T>(array: LoggedArray<T>) {
 }
 
 
-const log2 = new Log();
+const log2 = new Logger();
 let array3 = log2.createArray([3,2,1]);
 insertionSort(array3);
 
