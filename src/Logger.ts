@@ -1,4 +1,3 @@
-
 /*
 actions: 
     'declaration'       -- name of variable and its value
@@ -12,15 +11,22 @@ actions:
 import { writeFile } from 'fs';
 import Stack from './lib/Stack';
 import LoggedArray from './LoggedArray';
-import { TraceStep, StateVariableType, Trace, StateVariable, StateDump, NewScope, LogVariable } from './types';
+import {
+  TraceStep,
+  StateVariableType,
+  Trace,
+  StateVariable,
+  StateDump,
+  Scope,
+  LogVariable
+} from './types';
 import LoggedIndex from './LoggedIndex';
 
 export default class Logger {
   private trace: Trace = { steps: [] };
-  private scopes = new Stack<NewScope>();
-  private currentState = new Stack<LogVariable<unknown>[]>;
+  private scopes = new Stack<Scope>();
+  private currentState = new Stack<LogVariable<unknown>[]>();
   private nextId: number = 0;
-
 
   public constructor() {
     this.currentState.push([]);
@@ -42,14 +48,13 @@ export default class Logger {
     });
   }
 
-
   public logChange<T>(id: number, newValue: T): void {
     //find var with id
     const iterator = this.currentState.iterator();
 
     //update its value
     const update = () => {
-      let logVarArray =  iterator.next();
+      let logVarArray = iterator.next();
       while (!logVarArray.done) {
         for (const logVar of logVarArray.value) {
           if (logVar.id == id) {
@@ -59,7 +64,7 @@ export default class Logger {
         }
         logVarArray = iterator.next();
       }
-    }
+    };
     update();
 
     //log step
@@ -80,10 +85,12 @@ export default class Logger {
     let logVarArray = iterator.next();
 
     while (!logVarArray.done) {
-      logVarArray.value.forEach(logVar => finalState.push(this.toStateVariable(logVar)));
+      logVarArray.value.forEach((logVar) => finalState.push(this.toStateVariable(logVar)));
       logVarArray = iterator.next();
     }
-    if (value) {finalState.push(value);}
+    if (value) {
+      finalState.push(value);
+    }
 
     console.log(finalState);
 
@@ -95,23 +102,8 @@ export default class Logger {
     logDestination.push(step);
   }
 
-  /*
-  var: a
-  var: b
-
-  // New scope  //immutablelinkedlist...
-    var: a
-    var: b
-    var: c
-    var: d
-  // End scope
-
-  var: a
-  var: b
-  */
-
   public startScope(name?: string) {
-    this.scopes.push({ type: "NewScope", name, subSteps: [] });
+    this.scopes.push({ type: 'Scope', name, subSteps: [] });
     this.currentState.push([]);
   }
 
@@ -119,9 +111,9 @@ export default class Logger {
     const currentScope = this.scopes.pop();
 
     if (this.scopes.isEmpty()) {
-        this.trace.steps.push(currentScope);
+      this.trace.steps.push(currentScope);
     } else {
-        this.scopes.peek().subSteps.push(currentScope);
+      this.scopes.peek().subSteps.push(currentScope);
     }
 
     this.currentState.pop();
@@ -134,7 +126,7 @@ export default class Logger {
       value: [...array]
     };
 
-    const logVar: LogVariable<unknown> = {...stateVar, id};
+    const logVar: LogVariable<unknown> = { ...stateVar, id };
 
     this.logStep(stateVar);
     this.currentState.peek().push(logVar);
@@ -147,10 +139,10 @@ export default class Logger {
     const stateVar: StateVariable<unknown> = {
       origin,
       type,
-      value 
+      value
     };
 
-    const logVar: LogVariable<unknown> = {...stateVar, id};
+    const logVar: LogVariable<unknown> = { ...stateVar, id };
 
     this.logStep(stateVar);
     this.currentState.peek().push(logVar);
@@ -158,117 +150,3 @@ export default class Logger {
     return new LoggedIndex<T>(value, id, this);
   }
 }
-
-/*
-const log = new Log();
-
-const arr = log.createArray([]);
-const index1 = arr.createIndex(1);
-
-// log.section('');
-log.mark(() => {
-  const index2 = arr.createIndex(2);
-})
-
-const index3 = log.createVar(3);
-
-
-function insertionSort<T>(array: LoggedArray<T>) {
-
-  for (let i = array.createIndex(1); i < array.length; i++) {
-    let j = i; //recordState<>()
-
-    while (j > 0 && array[j - 1] > array[j]) {
-      array.swap(j,j-1);
-      
-      //let tmp = array[j];
-      //array[j] = array[j - 1];
-      //array[j - 1] = tmp;
-      j--;
-    }
-  }
-}
-
-*/
-
-/*
-
-Trace: {
-  steps: [
-
-    //arr.createArray()
-    {
-      type: StateDump
-      state: [
-        {
-          type: StateVariableType.STATIC,
-          value: []
-        }
-      ]
-    },
-
-    //const index1 = arr.createIndex(1)
-    {
-      type: StateDump
-      state: [
-        {
-          type: StateVariableType.STATIC,
-          value: []
-        },
-        {
-          type: StateVariableType.POINTER,
-          value: 1
-        }
-      ]
-    },
-
-    //log.mark()
-    {
-      type: StartSection
-    },
-
-    // const index2 = arr.createIndex(2)
-    {
-      type: StateDump
-      state: [
-        {
-          type: StateVariableType.STATIC,
-          value: []
-        },
-        {
-          type: StateVariableType.POINTER,
-          value: 1
-        },
-        {
-          type: StateVariableType.POINTER,
-          value: 2
-        }
-      ]
-    },
-
-    {
-      type: EndSection
-    }
-      
-    // const index3 = log.createVar(3)
-    {
-      type: StateDump
-      state: [
-        {
-          type: StateVariableType.STATIC,
-          value: []
-        },
-        {
-          type: StateVariableType.POINTER,
-          value: 1
-        },
-        {
-          type: StateVariableType.STATIC,
-          value: 3
-        }
-      ]
-    }
-  ]
-}
-
-*/
