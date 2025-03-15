@@ -1,5 +1,5 @@
 //Works by shifting elements to the right until the current element is greater than the element to its left
-function insertionSort(arr: number[]): number[] {
+export function insertionSort(arr: number[]): number[] {
     const n = arr.length;
 
     for (let i = 1; i < n; i++) {

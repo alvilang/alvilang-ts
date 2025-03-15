@@ -1,3 +1,6 @@
+//This file contains the implementation of a linked list data structure.
+//It includes a Node class and a linkedList class.
+
 export class Node2<T> {
     value: T;
     next: Node2<T> | null = null;
@@ -16,10 +19,11 @@ export class linkedList<T> {
     append(value: T): void {
         const newNode = new Node2(value);
 
+        //if there is no head, then there is no list
         if (!this.head) {
             this.head = newNode;
             this.tail = newNode;
-
+        //if there is a head but no tail, then there is only one node in the list
         } else if (this.tail) {
             this.tail.next = newNode;
             this.tail = newNode;
@@ -40,7 +44,7 @@ export class linkedList<T> {
         }
         this.size++;
     }
-
+    //remove the first node in the list and return its value
     removeFirst(): T | undefined {
         if (!this.head) {
             throw new Error("List is empty. Cannot remove first element.");
@@ -52,6 +56,7 @@ export class linkedList<T> {
         
     }
 
+    //remove the last node in the list and return its value
     removeLast(): T | undefined {
         if (!this.head) {
             throw new Error("List is empty. Cannot remove last element.");
@@ -64,6 +69,7 @@ export class linkedList<T> {
             return removedValue;
         }
 
+        //This part of the code is to remove the last node in the list
         let current = this.head;
         //loop until the node before the tail
         while (current.next && current.next !== this.tail) {

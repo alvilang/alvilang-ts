@@ -1,5 +1,5 @@
 //Sorts by dividing the array into two halves, sorting each half, and then merging the sorted halves together.
-function mergeSort(arr: number[]): number[] {
+export function mergeSort(arr: number[]): number[] {
     if (arr.length <= 1) {
         return arr;
     }
@@ -12,7 +12,7 @@ function mergeSort(arr: number[]): number[] {
 }
 
 //helper function that merges two sorted arrays
-function merge(left: number[], right: number[]): number[]{
+export function merge(left: number[], right: number[]): number[]{
     let result: number[] = [];
     let leftIndex = 0;
     let rightIndex = 0;

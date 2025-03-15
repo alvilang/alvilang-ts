@@ -1,5 +1,5 @@
 //Bubblesort sorts by comparing adjacent elements and swapping them if they are in the wrong order
-function bubbleSort(arr: number[]): number[] {
+export function bubbleSort(arr: number[]): number[] {
     const n = arr.length;
 
     for (let i = 0; i < n - 1; i++) {

@@ -1,3 +1,5 @@
+//Another queue implementation using a linked list. The linked list is the one implemented in the linkedList.ts file
+
 import { linkedList } from "./linkedList";
 
 export class linkedListQueue<T> {
@@ -8,10 +10,12 @@ export class linkedListQueue<T> {
         this.linkedList = new linkedList<T>();
     }
 
+    //Check if the queue is empty
     isEmpty(): boolean {
         return this.linkedList.getSize() === 0;
     }
 
+    //Return the size of the queue, uses the linked list getSize method
     size(): number {
         return this.linkedList.getSize();
     }

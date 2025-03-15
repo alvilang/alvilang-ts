@@ -1,7 +1,7 @@
 //Quicksort using median of three partitioning
 //Moves all elements less than the pivot to the left and all elements greater than the pivot to the right
 //Then recursively sorts the left and right halves
-function quickSort(arr: number[]): number[] {
+export function quickSort(arr: number[]): number[] {
     
     if (arr.length <= 1) {
         return arr;
@@ -23,7 +23,7 @@ function quickSort(arr: number[]): number[] {
 }
 
 //Helper function to find the median of three elements
-function medianOfThree(arr: number[]): number {
+export function medianOfThree(arr: number[]): number {
     const first = arr[0];
     const last = arr[arr.length - 1];
     const middle = arr[Math.floor(arr.length / 2)];
