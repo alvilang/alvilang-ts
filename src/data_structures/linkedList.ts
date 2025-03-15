@@ -49,9 +49,14 @@ export class linkedList<T> {
     if (!this.head) {
       throw new Error('List is empty. Cannot remove first element.');
     }
-    if (this.size > 0) this.size--;
+
     const removedValue = this.head.value;
     this.head = this.head.next;
+    if (!this.head) {
+      this.tail = null;
+    }
+
+    if (this.size > 0) this.size--;
     return removedValue;
   }
 
@@ -97,3 +102,29 @@ export class linkedList<T> {
     return this.tail?.value;
   }
 }
+
+//test
+const list = new linkedList<number>();
+list.append(1);
+list.append(2);
+list.append(3);
+list.append(4);
+list.append(5);
+console.log(list.getHead()); //1
+console.log(list.getTail()); //5
+console.log(list.getSize()); //5
+list.removeFirst();
+console.log(list.getHead()); //2
+list.removeLast();
+console.log(list.getTail()); //4
+console.log(list.getSize()); //3
+list.prepend(0);
+console.log(list.getHead()); //0
+list.removeFirst();
+list.removeFirst();
+list.removeFirst();
+list.removeFirst();
+console.log(list.getHead()); //undefined
+console.log(list.getTail()); //undefined
+console.log(list.getSize()); //0
+list.removeFirst(); //Error: List is empty. Cannot remove first element.
