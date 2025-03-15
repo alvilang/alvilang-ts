@@ -21,11 +21,11 @@ export class linkedListQueue<T> {
         
     }
 
-    dequeue(): void {
+    dequeue(): T | undefined {
         if (this.isEmpty()) {
-            return;
+            throw new Error("Queue is empty. Cannot dequeue.");
         }
-        this.linkedList.removeFirst();
+        return this.linkedList.removeFirst();
     }
 
     peek(): T | undefined {

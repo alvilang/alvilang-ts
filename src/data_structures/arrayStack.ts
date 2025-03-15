@@ -12,11 +12,18 @@ export class arrayStack<T> implements IStack<T> {
         this.items = [];
     }
 
+    isEmpty(): boolean {
+        return this.items.length === 0;
+    }
+
     push(item: T): void {
         this.items.push(item);
     }
 
     pop(): T | undefined {
+        if (this.isEmpty()) {
+            throw new Error("Stack is empty. Cannot pop.");
+        }
         return this.items.pop()
     }
 

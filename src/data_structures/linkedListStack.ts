@@ -1,11 +1,15 @@
 import { linkedList } from './linkedList.ts';
 
-class linkedListStack<T> {
+export class linkedListStack<T> {
     private linkedList: linkedList<T> | null = null;
     private size: number = 0;
 
     constructor() {
         this.linkedList = new linkedList<T>();
+    }
+
+    isEmpty(): boolean {
+        return this.size === 0;
     }
 
     push(value: T): void {
@@ -14,6 +18,9 @@ class linkedListStack<T> {
     }
 
     pop(): void {
+        if (this.isEmpty()) {
+            throw new Error("Stack is empty. Cannot pop.");
+        }
         this.linkedList?.removeLast();
         if (this.size > 0) this.size--;
     }

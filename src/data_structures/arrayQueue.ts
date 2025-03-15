@@ -10,15 +10,18 @@ export class arrayQueue<T> {
         this.items.push(item);
     }
 
-    dequeue(): void {
-        this.items.shift();
+    dequeue(): T | undefined {
+       if (this.isEmpty()) {
+        throw new Error("Queue is empty. Cannot dequeue.");
+       }
+       return this.items.shift();
     }
 
     peek(): T | undefined {
         return this.items[0];
     }
 
-    sisze(): number {
+    size(): number {
         return this.items.length;
     }
 }

@@ -41,22 +41,27 @@ export class linkedList<T> {
         this.size++;
     }
 
-    removeFirst(): void {
+    removeFirst(): T | undefined {
         if (!this.head) {
-            return;
+            throw new Error("List is empty. Cannot remove first element.");
         }
-        this.head = this.head.next;
         if (this.size > 0) this.size--;
+        const removedValue = this.head.value;
+        this.head = this.head.next;
+        return removedValue;
+        
     }
 
-    removeLast(): void {
+    removeLast(): T | undefined {
         if (!this.head) {
-            return;
+            throw new Error("List is empty. Cannot remove last element.");
         }
         if (!this.head.next) {
+            const removedValue = this.head.value;
             this.head = null;
-            this.size--;
-            return;
+            this.tail = null;
+            if (this.size > 0) this.size--;
+            return removedValue;
         }
 
         let current = this.head;
@@ -64,9 +69,13 @@ export class linkedList<T> {
         while (current.next && current.next !== this.tail) {
             current = current.next;
         }
+
+        const removedValue = this.tail!.value; // Save the removed value
         current.next = null;
         this.tail = current;
         if (this.size > 0) this.size--;
+
+        return removedValue;
     }
 
     getSize(): number {
