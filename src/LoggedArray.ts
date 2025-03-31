@@ -7,9 +7,9 @@ import { StateVariableType } from './types';
  * all changes
  */
 export default class LoggedArray<T> {
-  private logger: Logger;
+  public logger: Logger;
   private array: T[];
-  private id: number;
+  public readonly id: number;
   public readonly length;
 
   public constructor(array: T[], id: number, logger: Logger) {
@@ -25,22 +25,50 @@ export default class LoggedArray<T> {
     this.logger.endScope();
   }
 
-  //LoggedIndex alternatives too
-  public swap(i: number, j: number): void {
+
+  //TODO: how to highlight for comparisons?
+  public mark(first: LoggedIndex<number> | number,
+              second: LoggedIndex<number> | number,
+              body: () => void): void {
+    const indices = [];
+    indices.push(first instanceof LoggedIndex ? first.get() : first);
+    indices.push(second instanceof LoggedIndex ? second.get() : second);
+
+    const scope = {
+      type: "scope",
+
+      subSteps: []
+    };
+
+    this.logger.startScope();
+    body();
+    this.logger.endScope();
+  }
+
+  public toArray(): T[] {
+    return [...this.array];
+  }
+
+  public swap(i: number | LoggedIndex<number>, j: number | LoggedIndex<number>): void {
+    if (i instanceof LoggedIndex) i = i.get();
+    if (j instanceof LoggedIndex) j = j.get();
     [this.array[i], this.array[j]] = [this.array[j], this.array[i]];
 
     //update log
+    const animationStep = {type: "swap", subject: this.id, data: [i,j]};
+    this.logger.logAnimation(animationStep);
     this.logger.logChange(this.id, [...this.array]);
   }
 
-  public set(index: number, value: T): void {
+  public set(index: number | LoggedIndex<number>, value: T): void {
+    if (index instanceof LoggedIndex) index = index.get();
     this.array[index] = value;
     this.logger.logChange(this.id, [...this.array]);
   }
 
-  //Add proxy/loggedIndex union to simulate using numeric variables
-  //as they are, arr.get(i) instead of arr.get(i.value) ...
-  public get(index: number): T {
+  public get(index: number | LoggedIndex<number>): T {
+    if (index instanceof LoggedIndex) index = index.get();
+
     return this.array[index];
   }
 
@@ -53,11 +81,11 @@ export default class LoggedArray<T> {
 
   forall j in [0, i-1]:           arr[j] == arr1[j]
   forall j in [i, arr.length-1]:  arr[j] == arr2[j]
-
-  //LoggedIndex alternative too
   */
-  public split(i: number): [LoggedArray<T>, LoggedArray<T>] {
+  public split(i: number | LoggedIndex<number>): [LoggedArray<T>, LoggedArray<T>] {
     //TODO:
+
+    if (i instanceof LoggedIndex) i = i.get();
 
     if (i < 0 || this.array.length <= i) {
       throw new RangeError();
@@ -75,11 +103,13 @@ export default class LoggedArray<T> {
     return split;
   }
 
-  public createIndex(i: number): LoggedIndex<number> {
+  public createIndex(i: number | LoggedIndex<number>, name?: string): LoggedIndex<number> {
+    if (i instanceof LoggedIndex) i = i.get();
+
     if (i < 0 || this.array.length <= i) {
       throw new RangeError();
     }
 
-    return this.logger.createVar(StateVariableType.POINTER, i, this.id);
+    return this.logger.createVar(StateVariableType.POINTER, i, name, this.id);
   }
 }
