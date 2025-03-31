@@ -11,6 +11,9 @@ actions:
 import { writeFile } from 'fs';
 import Stack from './lib/Stack';
 import LoggedArray from './LoggedArray';
+import LoggedIndex from './LoggedIndex';
+import LoggedCircularArrayQueue from './LoggedCircularArrayQueue';
+import LoggedArrayStack from './LoggedArrayStack';
 import {
   TraceStep,
   StateVariableType,
@@ -18,9 +21,9 @@ import {
   StateVariable,
   StateDump,
   Scope,
-  LogVariable
+  LogVariable,
+  AnimationStep
 } from './types';
-import LoggedIndex from './LoggedIndex';
 
 export default class Logger {
   private trace: Trace = { steps: [] };
@@ -32,7 +35,7 @@ export default class Logger {
     this.scopedStates.push([]);
   }
 
-  public getNextId(): number {
+  private getNextId(): number {
     return this.nextId++;
   }
 
@@ -46,6 +49,67 @@ export default class Logger {
         console.error(err);
       }
     });
+  }
+
+  public static recursion(func: () => void, ...args: LoggedArray<any>[]) {  //LoggedObject
+    //saving their previous loggers to reassign after function, maybe we assume that all args have the same log?
+    const oldLoggers: Logger[] = args.map(arg => arg.logger);
+    //create new logger for arguments to store their logs in
+    const freshLogger = new Logger();
+
+    //find max id
+    let maxId = 0
+    {
+      if (args.length > 0) {
+        maxId = args[0].id;
+        for (let i = 1; i < args.length; i++) {
+          if (args[i].id > maxId) {
+            maxId = args[i].id;
+          }        
+        }
+      }
+    }
+    //largest id from Logged arguments that are used in recursive call to ensure new arguments created
+    //in function get unused ids'    
+    freshLogger.nextId = maxId; 
+
+    args.forEach(arg => {
+      //assigning new logger to each argument
+      arg.logger = freshLogger;
+
+      //adding variable to new logger
+      const stateVar: StateVariable<unknown> = {
+        type: StateVariableType.STATIC,
+        value: arg.toArray()
+      };
+      const logVar: LogVariable<unknown> = { ...stateVar, id: arg.id};
+  
+      freshLogger.logStep(stateVar);
+      freshLogger.scopedStates.peek().push(logVar);
+    });
+
+    func();
+
+    //??
+    args.forEach(arg => arg.logger = freshLogger);
+
+    for (let i = 0; i < args.length; i++) {
+      oldLoggers[i].startScope("Recursion");
+      //combining logged data from function to old loggers inside a new scope
+      oldLoggers[i].combine(freshLogger);
+      oldLoggers[i].endScope();
+      //assigning previous logger to arguments
+      args[i].logger = oldLoggers[i];
+    }
+  }
+
+  public combine(logger: Logger): void {
+    const logDest = this.getLogDestination();
+    logger.trace.steps.forEach(step => logDest.push(step));
+  }
+
+  public logAnimation<T>(animationStep: AnimationStep): void {
+    this.getLogDestination().push(animationStep);
   }
 
   public logChange<T>(id: number, newValue: T): void {
@@ -112,6 +176,15 @@ export default class Logger {
     this.scopedStates.pop();
   }
 
+  public createQueue<T>(capacity: number): LoggedCircularArrayQueue<T> {
+    return new LoggedCircularArrayQueue<T>(this.createArray(Array(capacity).fill(null)));
+  }
+
+  public createStack<T>(capacity: number): LoggedArrayStack<T> {
+    return new LoggedArrayStack<T>(this.createArray(Array(capacity).fill(null)));
+    
+  }
+
   public createArray<T>(array: T[]): LoggedArray<T> {
     const id = this.getNextId();
     const stateVar: StateVariable<unknown> = {
@@ -127,7 +200,7 @@ export default class Logger {
     return new LoggedArray<T>(array, id, this);
   }
 
-  public createVar<T>(type: StateVariableType, value: T, origin?: number): LoggedIndex<T> {
+  public createVar<T>(type: StateVariableType, value: T, name?: string, origin?: number): LoggedIndex<T> {
     const id = this.getNextId();
     const stateVar: StateVariable<unknown> = {
       origin,
@@ -142,4 +215,6 @@ export default class Logger {
 
     return new LoggedIndex<T>(value, id, this);
   }
+
+
 }
