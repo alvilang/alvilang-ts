@@ -1,9 +1,10 @@
-import Logger from './Logger';
 
-// export type PointerVariable = {
-//   owner: unknown
-// }
-
+/*
+If pointer variables can become a part of objects (arrays, ...) we can
+get rid of this type.
+Reason: An object being inside another object inherently means that
+it is a pointer, and an object that isn't is a static object.
+*/
 export enum StateVariableType {
   STATIC,
   POINTER
@@ -20,10 +21,35 @@ export type LogVariable<T> = StateVariable<T> & {
   id: number;
 };
 
+export type AnimationStep = {
+  type: string;
+  subject: number;
+  data: any;  //TODO
+}
+
 export type StateDump = {
   type: 'StateDump';
   state: StateVariable<unknown>[];
 };
+
+/*
+export interface Scope {
+  type: 'Scope';
+  subSteps: TraceStep[];
+}
+
+export type BlockScope = {
+  name?: string;
+  
+} & Scope;
+
+export type RecursionScope = {
+  name?: string;
+  //range?
+} & Scope;
+
+
+*/
 
 export type Scope = {
   type: 'Scope';
@@ -31,7 +57,8 @@ export type Scope = {
   subSteps: TraceStep[];
 };
 
-export type TraceStep = StateDump | Scope;
+
+export type TraceStep = AnimationStep | StateDump | Scope;
 
 export type Trace = {
   steps: TraceStep[];
