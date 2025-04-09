@@ -177,20 +177,19 @@ export default class LoggedBST<T> implements LoggedObject{
 
   //TODO: add logging steps
   private find(item: T): boolean {    
-    return this.findHelper(this.tree, item, []);
-  }
+    let currTree = this.tree;
+    const steps = [];
 
-  private findHelper(tree: BinaryTree<T>, item: T, steps: boolean[]): boolean {
-    while (tree) {
-      this.logger.compare([tree, steps], CompareOperator.LT, item);
-      if (tree.value < item) {
+    while (currTree) {
+      this.logger.compare([currTree, steps], CompareOperator.LT, item);
+      if (currTree.value < item) {
         steps.push(true);
-        tree = tree.right;
+        currTree = currTree.right;
       } else {
-        this.logger.compare([tree, steps], CompareOperator.GT, item);
-        if (tree.value > item) {
+        this.logger.compare([currTree, steps], CompareOperator.GT, item);
+        if (currTree.value > item) {
           steps.push(false);
-          tree = tree.left;
+          currTree = currTree.left;
         } else {
           return true;
         }
