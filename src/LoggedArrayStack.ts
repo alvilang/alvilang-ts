@@ -25,8 +25,8 @@ export default class LoggedArrayStack<T> {
 
     const animationStep = {
       type: "push",
-      subject: this.stack.id,
-      data: item
+      subjects: [this.stack.id],
+      data: [item, this.front.get()]
     };
 
     this.stack.logger.logAnimation(animationStep);
@@ -40,8 +40,8 @@ export default class LoggedArrayStack<T> {
     const popValue = this.stack.get(this.front.get()-1);
     const animationStep = {
       type: "pop",
-      subject: this.stack.id,
-      data: popValue
+      subjects: [this.stack.id],
+      data: [popValue, this.front.get()-1]
     };
 
     this.stack.logger.logAnimation(animationStep);
