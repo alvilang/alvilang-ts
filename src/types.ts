@@ -1,4 +1,15 @@
 
+export enum CompareOperator {
+  LT, LE, GT, GE, EQ, NE
+//alt: LessThan, LessOrEqualTo, GreaterThan, GreaterEqual, Equal, NotEqual
+}
+
+export interface LoggedObject {
+  getId(): number,
+  toValue(): any
+}
+
+
 /*
 If pointer variables can become a part of objects (arrays, ...) we can
 get rid of this type.
@@ -23,7 +34,7 @@ export type LogVariable<T> = StateVariable<T> & {
 
 export type AnimationStep = {
   type: string;
-  subject: number;
+  subjects: number[];
   data: any;  //TODO
 }
 
