@@ -76,8 +76,8 @@ export default class LoggedCircularArrayQueue<T> {
 
     const animationStep = {
       type: 'enqueue',
-      subject: this.queue.id,
-      data: item
+      subjects: [this.queue.id],
+      data: [item, this.head.get()]
     };
     this.queue.logger.logAnimation(animationStep);
     this.queue.set(this.head, item);
@@ -93,8 +93,8 @@ export default class LoggedCircularArrayQueue<T> {
     const dequeued = this.queue.get(this.tail);
     const animationStep = {
       type: 'dequeue',
-      subject: this.queue.id,
-      data: dequeued
+      subjects: [this.queue.id],
+      data: [dequeued, this.tail.get()]
     };
     this.queue.logger.logAnimation(animationStep);
     this.queue.set(this.tail, null as T);
