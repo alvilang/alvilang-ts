@@ -22,8 +22,11 @@ import {
   StateDump,
   Scope,
   LogVariable,
-  AnimationStep
+  AnimationStep,
+  CompareOperator,
+  LoggedObject
 } from './types';
+import LoggedBST from './LoggedBST';
 
 export default class Logger {
   private trace: Trace = { steps: [] };
@@ -108,6 +111,50 @@ export default class Logger {
     logger.trace.steps.forEach(step => logDest.push(step));
   }
 
+  //TODO: comparison of primitive values directly, 5 < 4 etc...
+  public compare<T,E>(arg1: [LoggedObject, any] | LoggedIndex<T> | any,
+                      op: CompareOperator,
+                      arg2: [LoggedObject, any] | LoggedIndex<E> | any): void
+  {
+    type pointer = { pointerData: any };
+    type data = {
+      op: CompareOperator,
+      arg1?: any ,
+      arg2?: any
+    };
+
+    const subjects: number[] = [];
+    const compareData: data = { op };
+
+
+    if (arg1 instanceof LoggedIndex) {
+      subjects.push(arg1.getId());
+    } else if (arg1 instanceof Array) {
+      subjects.push(arg1[0].getId());
+      compareData.arg1 = {pointerData: arg1[1]};
+    } else {
+      compareData.arg1 = arg1;
+    }
+    if (arg2 instanceof LoggedIndex) {
+      subjects.push(arg2.getId());
+    } else if (arg2 instanceof Array) {
+      subjects.push(arg2[0].getId());
+      compareData.arg2 = {pointerData: arg2[1]};
+    } else {
+      compareData.arg2 = arg2;
+    }
+
+    //substeps?
+    const animationStep: AnimationStep = {
+      type: "comparison",
+      subjects,
+      data: compareData
+    };
+
+    this.logAnimation(animationStep);
+    this.logStep();
+  }
+
   public logAnimation<T>(animationStep: AnimationStep): void {
     this.getLogDestination().push(animationStep);
   }
@@ -174,6 +221,23 @@ export default class Logger {
     }
 
     this.scopedStates.pop();
+  }
+
+  public createBST<T>(): LoggedBST<T> {
+
+    const id = this.getNextId();
+    const tree = new LoggedBST<T>(id, this);
+    const stateVar: StateVariable<unknown> = {
+      type: StateVariableType.STATIC,
+      value: tree.toValue()
+    };
+
+    const logVar: LogVariable<unknown> = { ...stateVar, id };
+
+    this.logStep(stateVar);
+    this.scopedStates.peek().push(logVar);
+
+    return tree;
   }
 
   public createQueue<T>(capacity: number): LoggedCircularArrayQueue<T> {
