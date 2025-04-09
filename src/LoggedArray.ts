@@ -1,12 +1,12 @@
 import Logger from './Logger';
 import LoggedIndex from './LoggedIndex';
-import { StateVariableType } from './types';
+import { LoggedObject, StateVariableType } from './types';
 
 /**
  * This class is a wrapper of an array that documents
  * all changes
  */
-export default class LoggedArray<T> {
+export default class LoggedArray<T> implements LoggedObject {
   public logger: Logger;
   private array: T[];
   public readonly id: number;
@@ -17,6 +17,14 @@ export default class LoggedArray<T> {
     this.logger = logger;
     this.array = [...array];
     this.length = array.length;
+  }
+
+  getId(): number {
+    return this.id;
+  }
+
+  toValue() {
+    return this.toArray();
   }
 
   public scope(body: () => void, name?: string): void {
@@ -55,7 +63,7 @@ export default class LoggedArray<T> {
     [this.array[i], this.array[j]] = [this.array[j], this.array[i]];
 
     //update log
-    const animationStep = {type: "swap", subject: this.id, data: [i,j]};
+    const animationStep = {type: "swap", subjects: [this.id], data: [i,j]};
     this.logger.logAnimation(animationStep);
     this.logger.logChange(this.id, [...this.array]);
   }
@@ -83,24 +91,31 @@ export default class LoggedArray<T> {
   forall j in [i, arr.length-1]:  arr[j] == arr2[j]
   */
   public split(i: number | LoggedIndex<number>): [LoggedArray<T>, LoggedArray<T>] {
-    //TODO:
-
     if (i instanceof LoggedIndex) i = i.get();
-
     if (i < 0 || this.array.length <= i) {
       throw new RangeError();
     }
 
+    //TODO:
     //log that a split has occured
+    //how?
+    const animationStep = {
+      type: 'split',
+      subjects: [this.id],
+      data: i
+    };
+    this.logger.logAnimation(animationStep);
 
-    const arr1 = this.array.slice(0, i);
-    const arr2 = this.array.slice(i);
-    const split: [LoggedArray<T>, LoggedArray<T>] = [
-      this.logger.createArray(arr1),
-      this.logger.createArray(arr2)
-    ];
+    return [this.slice(0,i), this.slice(i)];
+  }
 
-    return split;
+  public slice(start?: number | LoggedIndex<number>, end?: number | LoggedIndex<number>): LoggedArray<T> {
+    if (start instanceof LoggedIndex) start = start.get();
+    if (end instanceof LoggedIndex) end = end.get();
+
+    //animationStep for slice too?
+
+    return this.logger.createArray(this.array.slice(start, end));
   }
 
   public createIndex(i: number | LoggedIndex<number>, name?: string): LoggedIndex<number> {
