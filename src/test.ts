@@ -1,5 +1,7 @@
 import Logger from './Logger';
 import LoggedArray from './LoggedArray';
+import { CompareOperator } from './types';
+import LoggedBST from './LoggedBST';
 
 //const log = new Logger();
 /*
@@ -110,24 +112,29 @@ function quickSortHelper<T>(array: LoggedArray<T>, low: number, high: number) {
   let left  = array.createIndex(low, "left");
   let right = array.createIndex(high-1, "right");
   const pivotIndex = array.createIndex(medianOfThree(array, low, high), "pivotIndex");
-  const pivotValue = array.get(pivotIndex);
 
   array.swap(pivotIndex, high);
 
+  array.logger.compare(left, CompareOperator.LE, right);
   while(left.get() <= right.get()) {
     
     //find left number
-    while ((left.get() <= right.get()) && (array.get(left) < pivotValue)) {
+    array.logger.compare(left, CompareOperator.LE, right);
+    array.logger.compare([array, left.get()], CompareOperator.LT, [array, high]);
+    while ((left.get() <= right.get()) && (array.get(left) < array.get(high))) {
       left.set(left.get()+1);
     }
 
     //find left number
-    while ((right.get() >= left.get()) && (array.get(right) > pivotValue)) {
+    array.logger.compare(right, CompareOperator.GE, left);
+    array.logger.compare([array, right.get()], CompareOperator.GT, [array, high]);
+    while ((right.get() >= left.get()) && (array.get(right) > array.get(high))) {
       right.set(right.get()-1);
     }
 
     //if a swap should be performed
     //array.mark(left, right, () => {
+    array.logger.compare(left, CompareOperator.LT, right);
     if (left.get() < right.get()) {
       array.swap(left, right);
       left.set(left.get()+1);
@@ -210,7 +217,7 @@ insertionSort(array3);
 log2.write('log2.json')
 */
 
-
+/*
 const log3 = new Logger();
 const a = [];
 for(let i = 21; i >= 0; i--) a.push(i); //[21..0]
@@ -219,7 +226,7 @@ let array4 = log3.createArray(a);
 quickSort(array4);
 log3.write('log3.json');
 console.log("\n" + toString(array4));
-
+*/
 
 const log5 = new Logger();
 const b = [7,6,5,4,3,2,1];
@@ -256,3 +263,44 @@ stack.pop();
 stack.push(4);
 stack.push(5);
 log7.write('stackTest.json');
+
+
+/*
+const log8 = new Logger();
+const arrayToSplit = log8.createArray([1,2,3,4,5,6]);
+arrayToSplit.split(3);
+log8.write('arraySplitting.json');
+*/
+
+
+const logger10 = new Logger()
+const tree = logger10.createBST<string>();
+
+[...'ALGORITHM'].forEach(element => {
+  tree.insert(element);
+  console.log(tree.toString());
+  console.log();
+});
+
+/*
+tree.insert(10);
+console.log(tree.toString());
+console.log();
+tree.insert(9);
+console.log(tree.toString())
+console.log();
+tree.insert(11);
+console.log(tree.toString())
+console.log();
+
+tree.insert(11);
+console.log(tree.toString())
+console.log();
+
+tree.delete(10);
+console.log(tree.toString())
+console.log();
+*/
+
+logger10.write('bst.json');
+
