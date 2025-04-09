@@ -5,7 +5,7 @@ import Logger from "./Logger";
 export default class LoggedIndex<T> {
   private value: T;
   private logger: Logger;
-  private id: number;
+  private readonly id: number;
 
   public constructor (initialValue: T, id: number, log: Logger) {
     this.value = initialValue;
@@ -21,6 +21,10 @@ export default class LoggedIndex<T> {
 
   public get(): T {
     return this.value;
+  }
+
+  public getId(): number {
+    return this.id;
   }
 
 }
