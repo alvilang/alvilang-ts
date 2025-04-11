@@ -1,5 +1,5 @@
 import Logger from "./Logger";
-import { BinaryTree, Node, empty, isEmpty, leaf } from "./Tree";
+import { BinaryTree, Node, empty, isEmpty, leaf } from "./lib/Tree";
 import { CompareOperator, LoggedObject } from "./types";
 
 type LeftRightMatrix<T> = [[T, Branch, Branch]];
