@@ -2,6 +2,10 @@ import Logger from './Logger';
 import LoggedArray from './LoggedArray';
 import { CompareOperator } from './types';
 import LoggedBST from './LoggedBST';
+import DirectedGraph from './lib/DirectedGraph';
+import LoggedGraph from './LoggedGraph';
+import { Edge, WeightedEdge, WeightedGraph } from './lib/Graph';
+import UndirectedGraph from './lib/UndirectedGraph';
 
 //const log = new Logger();
 /*
@@ -208,6 +212,62 @@ function medianOfThree<T>(array: LoggedArray<T>, low: number, high: number): num
 }
 
 
+//ideally number should be E
+function dijkstra<V>(start: V, graph: LoggedGraph<V,number>) {
+  type CostPath<V> = { known: boolean, cost: number, path: V };
+
+  const table: Map<V, CostPath<V>> = new Map<V, CostPath<V>>();
+  //temporary solution to immitate minimum priority queue
+  const minQueue: WeightedEdge<V,number>[] = [];
+  //setup
+  minQueue.push({src: start, dst: start, weight: 0});
+  graph.getNodes().forEach(node => table.set(node, {known: false, cost: Infinity, path: null as V}));
+  table.get(start)!.cost = 0;
+
+  //start: table is 'empty' and none of the nodes are visited
+  while (minQueue.length > 0) {
+    console.log('Queue:        %o', minQueue);
+
+    const currEdge = minQueue.pop()!;
+    const currNodeStatus = table.get(currEdge.dst)!
+    
+    console.log('Current Edge: %o', currEdge);
+    console.log('Status:       %o', currNodeStatus);
+    console.log('Table:        %o', table);
+    console.log();
+
+
+    //if node has not been visited
+    if (!currNodeStatus.known) {
+      currNodeStatus.known = true;
+      ///*
+      //to exclude setting path as start for startnode
+      if (currEdge.src !== currEdge.dst) {
+        currNodeStatus.path = currEdge.src;
+      }
+      //*/
+      //currNodeStatus.path = currEdge.src;
+      currNodeStatus.cost = currEdge.weight;
+
+      //find adjacent edges with destination nodes that have not been visited
+      //add accumilated weight to every edge
+      //add edges to priority queue
+      //assign path to current node
+      for (const [adjEdge, pointer] of graph.getEdgesFromNode(currEdge.dst)) {
+        const adjNodeStatus = table.get(adjEdge.dst)!;
+        if (!adjNodeStatus.known /*&& adjNodeStatus.cost > currEdge.weight + adjEdge.weight*/ ) {
+          adjEdge.weight += currEdge.weight;
+          minQueue.push(adjEdge);
+        }
+      }
+      minQueue.sort((a,b) => b.weight - a.weight);
+    }
+  }
+
+  return table;
+}
+
+
 /*
 const log2 = new Logger();
 let array3 = log2.createArray([3,2,1]);
@@ -303,4 +363,116 @@ console.log();
 */
 
 logger10.write('bst.json');
+
+/*
+   2
+ A----B
+ |\   |
+ | \3 |
+4|  \ |7
+ |   \|
+ C----D
+   5
+*/
+const adjList = new DirectedGraph<string, number>();
+adjList.addNodes(['B','C','D','A']);
+adjList.addBiEdge('A', 'B', 2);
+adjList.addBiEdge('A', 'C', 4);
+adjList.addBiEdge('A', 'D', 3);
+adjList.addBiEdge('B', 'D', 7);
+adjList.addBiEdge('C', 'D', 5);
+Logger.registerAndWrite(Array.from(adjList.graph), 'graph1.json');
+
+
+function adjListToGraph<V,E>(graph: DirectedGraph<V,E>): WeightedGraph<V,E> {
+  const weightedGraph: WeightedGraph<V,E> = {
+    vertices: [],
+    edges: [],
+    weights: []
+  };
+  for (const node of graph.getNodes()) {
+    weightedGraph.vertices.push(node);
+    for (const weightedEdge of graph.getEdgesFromNode(node)) {
+      const edge: Edge<V> = {
+        src: weightedEdge.src,
+        dst: weightedEdge.dst
+      }
+      weightedGraph.edges.push(edge);
+      weightedGraph.weights.push(weightedEdge.weight);
+    }
+  }
+  return weightedGraph;
+}
+
+const graph = new LoggedGraph(0, new Logger(), adjListToGraph(adjList)).toValue();
+Logger.registerAndWrite(graph, 'graph2.json');
+
+const map = new Map<string, number>();
+map.set("a",1);
+map.set("b",2);
+map.set("c",3);
+map.set("d",4);
+Logger.registerAndWrite(Array.from(map), 'map.json');
+
+const array = [];
+array.push(3);
+Logger.registerAndWrite(array, 'array.json');
+
+
+/*
+//           7            =>            7         
+//     _-----------_      =>      _-----------_   
+//    /  3      7   \     =>     /  3      7   \  
+//   0 ----- 2 ----- 4    =>    A ----- C ----- E 
+//   |       |     / |    =>    |       |     / | 
+//  4|       |8  /5  |    =>   4|       |8  /5  | 
+//   |   8   | /     |    =>    |   8   | /     | 
+//   1 ----- 6       |6   =>    B ----- G       |6
+//   | \             |    =>    | \             | 
+//  4|   \8          |    =>   4|   \8          | 
+//   |  9  \     9   |    =>    |  9  \     9   | 
+//   3 ----- 5 ----- 7    =>    D ----- F ----- H 
+//    \             /     =>     \             /  
+//     '-----------'      =>      '-----------'   
+//           2            =>            2         
+*/
+
+const adjList2 = new DirectedGraph<string, number>();
+adjList2.addNodes(['A','B','C','D','E','F','G', 'H']);
+adjList2.addEdge('A', 'B', 4);
+adjList2.addEdge('A', 'C', 3);
+adjList2.addEdge('A', 'E', 7);
+
+adjList2.addEdge('B', 'A', 4);
+adjList2.addEdge('B', 'G', 8);
+adjList2.addEdge('B', 'D', 4);
+adjList2.addEdge('B', 'F', 8);
+
+adjList2.addEdge('C', 'A', 3);
+adjList2.addEdge('C', 'E', 7);
+adjList2.addEdge('C', 'G', 8);
+
+adjList2.addEdge('D', 'B', 4);
+adjList2.addEdge('D', 'F', 9);
+adjList2.addEdge('D', 'H', 2);
+
+adjList2.addEdge('E', 'A', 7);
+adjList2.addEdge('E', 'C', 8);
+adjList2.addEdge('E', 'G', 5);
+adjList2.addEdge('E', 'H', 6);
+
+adjList2.addEdge('F', 'B', 8);
+adjList2.addEdge('F', 'D', 9);
+adjList2.addEdge('F', 'H', 9);
+
+adjList2.addEdge('G', 'B', 8);
+adjList2.addEdge('G', 'C', 8);
+adjList2.addEdge('G', 'E', 5);
+
+adjList2.addEdge('H', 'D', 2);
+adjList2.addEdge('H', 'E', 6);
+adjList2.addEdge('H', 'F', 9);
+
+const dijkstraGraph = new LoggedGraph(0, new Logger(), adjListToGraph(adjList2));
+console.log(dijkstra('B', dijkstraGraph));
 
