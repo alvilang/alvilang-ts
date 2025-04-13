@@ -167,6 +167,13 @@ export default class Logger {
     this.logStep();
   }
 
+
+  /*
+  TODO: id issue
+  potential reasons:
+   * the order of the elements in the for loops
+   * the order of the calls in logChange
+  */
   private updateVar<T>(id: number, newValue: T): void {
     for (const logVarArray of this.scopedStates) {
       for (const logVar of logVarArray) {
@@ -278,6 +285,23 @@ export default class Logger {
     this.scopedStates.peek().push(logVar);
 
     return new LoggedIndex<T>(value, id, this);
+  }
+
+  public static registerAndWrite(o: any, logFile: string) {
+    const logger = new Logger();
+
+    const id = logger.getNextId();
+    const stateVar: StateVariable<unknown> = {
+      type: StateVariableType.STATIC,
+      value: o
+    };
+
+    const logVar: LogVariable<unknown> = { ...stateVar, id };
+
+    logger.logStep(stateVar);
+    logger.scopedStates.peek().push(logVar);
+
+    logger.write(logFile);
   }
 
 
