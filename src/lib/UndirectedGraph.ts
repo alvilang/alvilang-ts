@@ -1,5 +1,5 @@
 import DirectedGraph from "./DirectedGraph";
-import { Edge } from "./Graph";
+import { WeightedEdge } from "./Graph";
 
 export default class UndirectedGraph<V,E> {
   private readonly graph: DirectedGraph<V,E>;
@@ -28,11 +28,11 @@ export default class UndirectedGraph<V,E> {
     return this.graph.getNodes();
   }
 
-  public getEdgesFromNode(node: V): Edge<V,E>[] {
+  public getEdgesFromNode(node: V): WeightedEdge<V,E>[] {
     return this.graph.getEdgesFromNode(node);
   }
 
-  public getAllEdges(): Edge<V,E>[] {
+  public getAllEdges(): WeightedEdge<V,E>[] {
     return this.graph.getAllEdges();
   }
 }

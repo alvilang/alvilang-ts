@@ -1,7 +1,7 @@
-import { Edge, Graph } from "./Graph";
+import { WeightedEdge, Graph, AdjacencyList } from "./Graph";
 
 export default class DirectedGraph<V,E> {
-  private readonly graph: Graph<V,E>;
+  public readonly graph: AdjacencyList<V,E>;
 
   public constructor() {
     this.graph = new Map();
@@ -45,7 +45,7 @@ export default class DirectedGraph<V,E> {
     return [...this.graph.keys()];
   }
 
-  public getEdgesFromNode(node: V): Edge<V,E>[] {
+  public getEdgesFromNode(node: V): WeightedEdge<V,E>[] {
     const edges  = this.graph.get(node);
     if (!edges) {
       throw new Error('Node does not exist');
@@ -53,10 +53,10 @@ export default class DirectedGraph<V,E> {
     return edges.map(edge => ({...edge}));
   }
 
-  public getAllEdges(): Edge<V,E>[] {
-    const allEdges: Edge<V,E>[] = [];
+  public getAllEdges(): WeightedEdge<V,E>[] {
+    const allEdges: WeightedEdge<V,E>[] = [];
     for(const [node, edges] of this.graph) {
-      edges.forEach(edge => allEdges.push(edge));
+      edges.forEach(edge => allEdges.push({...edge}));
     }
     return allEdges;
   }
