@@ -1,54 +1,47 @@
 import Logger from './Logger';
 import LoggedIndex from './LoggedIndex';
-import { LoggedObject, StateVariableType } from './types';
+import { LoggedObject, Scope, StateVariableType } from './types';
 
 /**
  * This class is a wrapper of an array that documents
  * all changes
  */
 export default class LoggedArray<T> implements LoggedObject {
-  public logger: Logger;
+  private logger: Logger;
   private array: T[];
   public readonly id: number;
-  public readonly length;
 
   public constructor(array: T[], id: number, logger: Logger) {
     this.id = id;
     this.logger = logger;
     this.array = [...array];
-    this.length = array.length;
   }
 
   getId(): number {
     return this.id;
   }
-
   toValue() {
     return this.toArray();
   }
-
-  public scope(body: () => void, name?: string): void {
-    this.logger.startScope(name);
-    body();
-    this.logger.endScope();
+  getLogger(): Logger {
+    return this.logger;
+  }
+  setLogger(logger: Logger): void {
+    this.logger = logger;
   }
 
+  public size(): number {
+    return this.array.length;
+  }
 
-  //TODO: how to highlight for comparisons?
-  public mark(first: LoggedIndex<number> | number,
-              second: LoggedIndex<number> | number,
-              body: () => void): void {
-    const indices = [];
-    indices.push(first instanceof LoggedIndex ? first.get() : first);
-    indices.push(second instanceof LoggedIndex ? second.get() : second);
+  //TODO: move to logger
+  public scope(body: () => void, name?: string): void {
+    let scope: Scope | undefined = undefined;
+    if (name) {
+      scope = {type: 'Scope', name, subSteps: []}
+    }
 
-    const scope = {
-      type: "scope",
-
-      subSteps: []
-    };
-
-    this.logger.startScope();
+    this.logger.startScope(scope);
     body();
     this.logger.endScope();
   }
@@ -79,6 +72,18 @@ export default class LoggedArray<T> implements LoggedObject {
 
     return this.array[index];
   }
+
+  public push(item: T): void {
+    this.array.push(item);
+    this.logger.logChange(this.id, [...this.array]);
+  }
+
+  public pop(): T | undefined {
+    const popped = this.array.pop();
+    this.logger.logChange(this.id, [...this.array]);
+    return popped;
+  }
+
 
   /*
   Splits the array into two arrays where the first array contains
@@ -127,4 +132,13 @@ export default class LoggedArray<T> implements LoggedObject {
 
     return this.logger.createVar(StateVariableType.POINTER, i, name, this.id);
   }
+
+  public apply<R>(fn: (this: T[], ...args: any[]) => R, ...args: any[]): R
+  {
+    const result = fn.apply(this.array, args);
+    this.logger.logChange(this.id, [...this.array]);
+    return result;
+  }
+
+  
 }
