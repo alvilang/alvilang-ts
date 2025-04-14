@@ -1,13 +1,3 @@
-/*
-actions: 
-    'declaration'       -- name of variable and its value
-    'assignment/update' -- name/id of variable to update and the new value
-    'swap'              -- indices to swap and the new array
-    'comparison'        -- indices to compare and the resulting comparison, true or false
-    'deletion'          -- index to delet and the new array
-    'mark'              -- index to mark in the array
-*/
-
 import { writeFile } from 'fs';
 import Stack from './lib/Stack';
 import LoggedArray from './LoggedArray';
@@ -24,9 +14,13 @@ import {
   LogVariable,
   AnimationStep,
   CompareOperator,
-  LoggedObject
+  LoggedObject,
+  HighlightScope,
+  RecursionScope
 } from './types';
 import LoggedBST from './LoggedBST';
+import LoggedGraph from './LoggedGraph';
+import { WeightedGraph } from './lib/Graph';
 
 export default class Logger {
   private trace: Trace = { steps: [] };
@@ -54,38 +48,57 @@ export default class Logger {
     });
   }
 
-  public static recursion(func: () => void, ...args: LoggedArray<any>[]) {  //LoggedObject
+  public static recursion(func: () => void, ...args: LoggedObject[]) {  //LoggedObject
     //saving their previous loggers to reassign after function, maybe we assume that all args have the same log?
-    const oldLoggers: Logger[] = args.map(arg => arg.logger);
+    //const oldLoggers: Logger[] = args.map(arg => arg.logger);
+
+    const oldLoggers: Map<Logger,number> = new Map();
+
+    for(let i = 0; i < args.length; i++) {
+      const logger = args[i].getLogger();
+      if (oldLoggers.has(logger)) {
+        oldLoggers.set(logger, oldLoggers.get(logger)! + 1);
+      } else {
+        oldLoggers.set(logger, 1);
+      }
+    }
+
     //create new logger for arguments to store their logs in
     const freshLogger = new Logger();
 
     //find max id
     let maxId = 0
+    if (args.length) {
+      //applies max function on the list
+      maxId = args.reduce((acc,curr) => curr.getId() > acc.getId() ? curr : acc).getId();
+    }
+    /*
     {
       if (args.length > 0) {
         maxId = args[0].id;
         for (let i = 1; i < args.length; i++) {
           if (args[i].id > maxId) {
             maxId = args[i].id;
-          }        
+          }
         }
       }
     }
+    */
+
     //largest id from Logged arguments that are used in recursive call to ensure new arguments created
     //in function get unused ids'    
     freshLogger.nextId = maxId; 
 
     args.forEach(arg => {
       //assigning new logger to each argument
-      arg.logger = freshLogger;
+      arg.setLogger(freshLogger);
 
       //adding variable to new logger
       const stateVar: StateVariable<unknown> = {
         type: StateVariableType.STATIC,
-        value: arg.toArray()
+        value: arg.toValue()
       };
-      const logVar: LogVariable<unknown> = { ...stateVar, id: arg.id};
+      const logVar: LogVariable<unknown> = { ...stateVar, id: arg.getId()};
   
       freshLogger.logStep(stateVar);
       freshLogger.scopedStates.peek().push(logVar);
@@ -94,21 +107,59 @@ export default class Logger {
     func();
 
     //??
-    args.forEach(arg => arg.logger = freshLogger);
+    args.forEach(arg => arg.setLogger(freshLogger));
 
-    for (let i = 0; i < args.length; i++) {
-      oldLoggers[i].startScope("Recursion");
-      //combining logged data from function to old loggers inside a new scope
-      oldLoggers[i].combine(freshLogger);
-      oldLoggers[i].endScope();
-      //assigning previous logger to arguments
-      args[i].logger = oldLoggers[i];
+    //TODO: 
+    for (let i = args.length-1; i >= 0; i--) {
+      const currLogger = args[i].getLogger();
+      const loggersLeft = oldLoggers.get(currLogger)! - 1;
+
+      if (loggersLeft) {
+        oldLoggers.set(currLogger, loggersLeft);
+      } else {
+
+        const recursionScope: RecursionScope = {
+          type: 'Scope',
+          subSteps: []
+        };
+
+        currLogger.startScope(recursionScope);
+        //combining logged data from function to old loggers inside a new scope
+        currLogger.combine(freshLogger);
+        currLogger.endScope();
+        //assigning previous logger to arguments
+        args[i].setLogger(currLogger);
+
+        oldLoggers.delete(currLogger);
+      }
     }
   }
 
   public combine(logger: Logger): void {
     const logDest = this.getLogDestination();
     logger.trace.steps.forEach(step => logDest.push(step));
+  }
+
+
+  public highlight(args: ([LoggedObject, any] | LoggedIndex<unknown>)[], body: () => void): void {
+    const highlighted: ([number,any] | number)[] = [];
+    const highlightScope: HighlightScope = {
+      type: 'Scope',
+      subSteps: [],
+      highlighted
+    }
+
+    for (const arg of args) {
+      if (arg instanceof LoggedIndex) {
+        highlighted.push(arg.getId());
+      } else {
+        highlighted.push([arg[0].getId(), arg[1]]);
+      }
+    }
+
+    this.startScope(highlightScope);
+    body();
+    this.endScope();
   }
 
   //TODO: comparison of primitive values directly, 5 < 4 etc...
@@ -119,8 +170,8 @@ export default class Logger {
     type pointer = { pointerData: any };
     type data = {
       op: CompareOperator,
-      arg1?: any ,
-      arg2?: any
+      arg1?: any | pointer,
+      arg2?: any | pointer
     };
 
     const subjects: number[] = [];
@@ -213,8 +264,8 @@ export default class Logger {
     logDestination.push(step);
   }
 
-  public startScope(name?: string) {
-    this.scopes.push({ type: 'Scope', name, subSteps: [] });
+  public startScope(scope: Scope = {type: 'Scope', subSteps: []}) {
+    this.scopes.push(scope);
     this.scopedStates.push([]);
   }
 
@@ -230,19 +281,18 @@ export default class Logger {
     this.scopedStates.pop();
   }
 
-  public createBST<T>(): LoggedBST<T> {
+  public createGraph<V,E>(graph?: WeightedGraph<V,E>): LoggedGraph<V,E> {
+    const id = this.getNextId();
+    const loggedGraph = new LoggedGraph<V,E>(id, this, graph);
+    this.registerLoggedObject(loggedGraph, id);
 
+    return loggedGraph;
+  }
+
+  public createBST<T>(): LoggedBST<T> {
     const id = this.getNextId();
     const tree = new LoggedBST<T>(id, this);
-    const stateVar: StateVariable<unknown> = {
-      type: StateVariableType.STATIC,
-      value: tree.toValue()
-    };
-
-    const logVar: LogVariable<unknown> = { ...stateVar, id };
-
-    this.logStep(stateVar);
-    this.scopedStates.peek().push(logVar);
+    this.registerLoggedObject(tree, id);
 
     return tree;
   }
@@ -258,17 +308,22 @@ export default class Logger {
 
   public createArray<T>(array: T[]): LoggedArray<T> {
     const id = this.getNextId();
+    const loggedArray = new LoggedArray<T>(array, id, this);
+    this.registerLoggedObject(loggedArray, id);
+
+    return loggedArray;
+  }
+
+
+  private registerLoggedObject(loggedObject: LoggedObject, id: number): void {
     const stateVar: StateVariable<unknown> = {
       type: StateVariableType.STATIC,
-      value: [...array]
+      value: loggedObject.toValue()
     };
-
     const logVar: LogVariable<unknown> = { ...stateVar, id };
 
     this.logStep(stateVar);
     this.scopedStates.peek().push(logVar);
-
-    return new LoggedArray<T>(array, id, this);
   }
 
   public createVar<T>(type: StateVariableType, value: T, name?: string, origin?: number): LoggedIndex<T> {
@@ -289,13 +344,11 @@ export default class Logger {
 
   public static registerAndWrite(o: any, logFile: string) {
     const logger = new Logger();
-
     const id = logger.getNextId();
     const stateVar: StateVariable<unknown> = {
       type: StateVariableType.STATIC,
       value: o
     };
-
     const logVar: LogVariable<unknown> = { ...stateVar, id };
 
     logger.logStep(stateVar);
@@ -303,6 +356,5 @@ export default class Logger {
 
     logger.write(logFile);
   }
-
 
 }
