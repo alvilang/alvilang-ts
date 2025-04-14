@@ -33,6 +33,10 @@ export default class Stack<T> {
   }
 
   [Symbol.iterator](): ArrayIterator<T> {
-    return this.storage.values();
+    const reversed: T[] = [];
+    for (let i = this.storage.length-1; i >= 0; i--) {
+      reversed.push(this.storage[i]);
+    }
+    return reversed.values();
   }
 }
