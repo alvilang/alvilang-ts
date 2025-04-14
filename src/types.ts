@@ -43,7 +43,7 @@ export type AnimationStep = {
 
 export type StateDump = {
   type: 'StateDump';
-  state: StateVariable<unknown>[];
+  state: LogVariable<unknown>[];
 };
 
 

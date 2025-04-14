@@ -73,11 +73,13 @@ export default class LoggedArray<T> implements LoggedObject {
     return this.array[index];
   }
 
+  //AnimationSteps?
   public push(item: T): void {
     this.array.push(item);
     this.logger.logChange(this.id, [...this.array]);
   }
 
+  //AnimationSteps?
   public pop(): T | undefined {
     const popped = this.array.pop();
     this.logger.logChange(this.id, [...this.array]);

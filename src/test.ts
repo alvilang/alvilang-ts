@@ -6,6 +6,7 @@ import DirectedGraph from './lib/DirectedGraph';
 import LoggedGraph from './LoggedGraph';
 import { Edge, WeightedEdge, WeightedGraph } from './lib/Graph';
 import UndirectedGraph from './lib/UndirectedGraph';
+import Stack from './lib/Stack';
 
 //const log = new Logger();
 /*
@@ -294,7 +295,7 @@ log3.write('log3.json');
 console.log("\n" + toString(array4));
 */
 
-/*
+
 const log5 = new Logger();
 const b = [7,6,5,4,3,2,1];
 
@@ -303,7 +304,7 @@ let array5 = log5.createArray(b);
 quickSort(array5);
 log5.write('log5.json');
 console.log("\n" + toString(array5));
-*/
+
 
 
 /*
@@ -496,3 +497,23 @@ logger11.endScope();
 logger11.createArray([4]);
 
 logger11.write('scoping.json');
+
+
+const stack2 = new Stack();
+
+stack2.push(1);
+stack2.push(2);
+stack2.push(3);
+stack2.push(4);
+
+for (const s of stack2) {
+  console.log(s);
+}
+
+const logger13 = new Logger();
+logger13.write('arrScope1.json');
+const arrScope = logger13.createArray([1,2]);
+logger13.write('arrScope2.json');
+arrScope.set(0, 3);
+logger13.write('arrScope3.json');
+
