@@ -27,6 +27,14 @@ export default class LoggedBST<T> implements LoggedObject{
     return this.toValueHelper(this.tree);
   }
 
+  getLogger(): Logger {
+    return this.logger;
+  }
+
+  setLogger(logger: Logger): void {
+    this.logger = logger;
+  }
+
   private toValueHelper(tree: BinaryTree<T>): BinaryTree<T> {
     if (!tree) return empty();
 

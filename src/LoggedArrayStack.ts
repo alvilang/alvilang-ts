@@ -1,13 +1,31 @@
 import LoggedArray from "./LoggedArray";
 import LoggedIndex from "./LoggedIndex";
+import Logger from "./Logger";
+import { LoggedObject } from "./types";
 
-export default class LoggedArrayStack<T> {
+export default class LoggedArrayStack<T> implements LoggedObject{
   private readonly stack: LoggedArray<T>;
   private front: LoggedIndex<number>;
 
   public constructor(stack: LoggedArray<T>) {
     this.stack = stack;
     this.front = stack.createIndex(0);
+  }
+
+  getId(): number {
+    return this.stack.getId();
+  }
+
+  toValue() {
+    return this.stack.toValue();
+  }
+
+  getLogger(): Logger {
+    return this.stack.getLogger();
+  }
+
+  setLogger(logger: Logger): void {
+    this.stack.setLogger(logger);
   }
 
   public size(): number {
@@ -19,7 +37,7 @@ export default class LoggedArrayStack<T> {
   }
 
   public push(item: T): void {
-    if (this.front.get() == this.stack.length) {
+    if (this.front.get() == this.stack.size()) {
       throw new Error("Stack is full");
     }
 
@@ -29,7 +47,7 @@ export default class LoggedArrayStack<T> {
       data: [item, this.front.get()]
     };
 
-    this.stack.logger.logAnimation(animationStep);
+    this.getLogger().logAnimation(animationStep);
     this.stack.set(this.front, item);
     this.front.set(this.front.get()+1);
   }
@@ -44,7 +62,7 @@ export default class LoggedArrayStack<T> {
       data: [popValue, this.front.get()-1]
     };
 
-    this.stack.logger.logAnimation(animationStep);
+    this.getLogger().logAnimation(animationStep);
     this.stack.set(this.front.get()-1, null as T);
     this.front.set(this.front.get()-1);
     

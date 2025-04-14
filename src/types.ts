@@ -1,3 +1,4 @@
+import Logger from "./Logger";
 
 export enum CompareOperator {
   LT, LE, GT, GE, EQ, NE
@@ -6,7 +7,9 @@ export enum CompareOperator {
 
 export interface LoggedObject {
   getId(): number,
-  toValue(): any
+  toValue(): any,
+  getLogger(): Logger,
+  setLogger(logger: Logger): void
 }
 
 
@@ -43,29 +46,22 @@ export type StateDump = {
   state: StateVariable<unknown>[];
 };
 
-/*
+
 export interface Scope {
   type: 'Scope';
+  name?: string
   subSteps: TraceStep[];
 }
 
-export type BlockScope = {
-  name?: string;
-  
-} & Scope;
+export type BlockScope = Scope;
 
-export type RecursionScope = {
-  name?: string;
+export type HighlightScope = Scope & {
+  highlighted: ([number,any] | number)[]
+};
+
+
+export type RecursionScope = Scope & {
   //range?
-} & Scope;
-
-
-*/
-
-export type Scope = {
-  type: 'Scope';
-  name?: string;
-  subSteps: TraceStep[];
 };
 
 

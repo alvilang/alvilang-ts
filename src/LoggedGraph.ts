@@ -6,7 +6,7 @@ import { LoggedObject } from "./types";
 export default class LoggedGraph<V,E> implements LoggedObject {
   private readonly graph: DirectedGraph<V,E>;
   private readonly id: number;
-  private readonly logger: Logger;
+  private logger: Logger;
   
   public constructor(id: number, logger: Logger, graph?: WeightedGraph<V,E>) {
     this.id = id;
@@ -50,6 +50,13 @@ export default class LoggedGraph<V,E> implements LoggedObject {
     return graph;
   }
 
+  getLogger(): Logger {
+    return this.logger;
+  }
+
+  setLogger(logger: Logger): void {
+    this.logger = logger;
+  }
 
   public addNode(node: V): void {
     this.graph.addNode(node);

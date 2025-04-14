@@ -1,5 +1,7 @@
 import LoggedArray from "./LoggedArray";
 import LoggedIndex from "./LoggedIndex";
+import Logger from "./Logger";
+import { LoggedObject } from "./types";
 
 /*
 {
@@ -54,7 +56,7 @@ import LoggedIndex from "./LoggedIndex";
 }
 */
 
-export default class LoggedCircularArrayQueue<T> {
+export default class LoggedCircularArrayQueue<T> implements LoggedObject {
   private readonly capacity: number;
   private queue: LoggedArray<T>;
   private items: number;  //logged number or not logged at all?
@@ -62,11 +64,27 @@ export default class LoggedCircularArrayQueue<T> {
   private tail: LoggedIndex<number>;
 
   public constructor(queue: LoggedArray<T>) {
-    this.capacity = queue.length;
+    this.capacity = queue.size();
     this.queue = queue;
     this.items = 0;
     this.head = queue.createIndex(0);
     this.tail = queue.createIndex(0);
+  }
+
+  getId(): number {
+    return this.queue.getId();
+  }
+
+  toValue() {
+    return this.queue.toValue();
+  }
+
+  getLogger(): Logger {
+    return this.queue.getLogger();
+  }
+
+  setLogger(logger: Logger): void {
+    this.queue.setLogger(logger);
   }
 
   public enqueue(item: T): void {
@@ -79,7 +97,7 @@ export default class LoggedCircularArrayQueue<T> {
       subjects: [this.queue.id],
       data: [item, this.head.get()]
     };
-    this.queue.logger.logAnimation(animationStep);
+    this.getLogger().logAnimation(animationStep);
     this.queue.set(this.head, item);
     this.head.set((this.head.get() + 1) % this.capacity);
     this.items++;
@@ -96,7 +114,7 @@ export default class LoggedCircularArrayQueue<T> {
       subjects: [this.queue.id],
       data: [dequeued, this.tail.get()]
     };
-    this.queue.logger.logAnimation(animationStep);
+    this.getLogger().logAnimation(animationStep);
     this.queue.set(this.tail, null as T);
     this.tail.set((this.tail.get() + 1) % this.capacity);
     this.items--;
