@@ -80,21 +80,7 @@ export default class Logger {
 
     args.forEach(arg => {
       arg.setLogger(recursionLogger);
-  
-      //adding variable to new logger
-      
-      //TODO: check if this still works
       recursionLogger.registerLoggedObject(arg, arg.getId());
-      /*
-      const stateVar: StateVariable<unknown> = {
-        type: StateVariableType.STATIC,
-        value: arg.toValue()
-      };
-      const logVar: LogVariable<unknown> = { ...stateVar, id: arg.getId()};
-  
-      recursionLogger.logStep(logVar);
-      recursionLogger.scopedStates.peek().push(logVar);
-      */
     });
 
     const result = func();
@@ -112,7 +98,8 @@ export default class Logger {
       oldLogger.startScope(recursionScope);
       oldLogger.combine(recursionLogger);
       oldLogger.endScope();
-
+      //assigning new nextId to account for ids used in the recursion
+      oldLogger.nextId = recursionLogger.nextId;
       //assigning previous logger to arguments
       loggedObjectsIndices.forEach(i => args[i].setLogger(oldLogger));
     }
