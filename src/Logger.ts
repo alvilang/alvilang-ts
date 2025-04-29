@@ -47,7 +47,7 @@ export default class Logger {
     });
   }
 
-  public static recursion(func: () => void, ...args: LoggedObject[]) {  //LoggedObject
+  public static recursion<T>(func: () => T, ...args: LoggedObject[]): T {  //LoggedObject
     //saving their previous loggers to reassign after function, maybe we assume that all args have the same log?
     //const oldLoggers: Logger[] = args.map(arg => arg.logger);
 
@@ -66,15 +66,17 @@ export default class Logger {
     const recursionLogger = new Logger();
 
     //find max id
-    let maxId = 0
     if (args.length) {
-      //applies max function on the list
-      maxId = args.reduce((acc,curr) => curr.getId() > acc.getId() ? curr : acc).getId()+1;
+      let currMaxNextId = args[0].getLogger().nextId;
+      for (let i = 1; i < args.length; i++) {
+        if (args[i].getLogger().nextId > currMaxNextId) {
+          currMaxNextId = args[i].getLogger().nextId;
+        }
+      }
+      //largest id from Logged arguments that are used in recursive call to ensure new arguments created
+      //in function get unused ids'
+      recursionLogger.nextId = currMaxNextId;
     }
-
-    //largest id from Logged arguments that are used in recursive call to ensure new arguments created
-    //in function get unused ids'    
-    recursionLogger.nextId = maxId; 
 
     args.forEach(arg => {
       arg.setLogger(recursionLogger);
@@ -95,7 +97,7 @@ export default class Logger {
       */
     });
 
-    func();
+    const result = func();
 
     //??
     args.forEach(arg => arg.setLogger(recursionLogger));
@@ -114,6 +116,8 @@ export default class Logger {
       //assigning previous logger to arguments
       loggedObjectsIndices.forEach(i => args[i].setLogger(oldLogger));
     }
+
+    return result;
   }
 
   public combine(logger: Logger): void {
