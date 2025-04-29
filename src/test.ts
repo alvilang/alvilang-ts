@@ -208,6 +208,46 @@ function medianOfThree<T>(array: LoggedArray<T>, low: number, high: number): num
   return high;
 }
 
+function mergeSort<V>(array: LoggedArray<V>): LoggedArray<V> {
+  if (array.size() <= 1) return array;
+
+  const [left, right] = array.split(Math.floor((array.size())/2));
+  const sortedLeft = Logger.recursion(() => mergeSort(left), left);
+  const sortedRight = Logger.recursion(() => mergeSort(right), right);
+
+  return Logger.recursion(() => merge(sortedLeft, sortedRight), sortedLeft, sortedRight);
+}
+
+function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
+  const merged = left.getLogger().createArray(Array(left.size()+right.size()).fill(null));
+  let leftIndex = left.createIndex(0);
+  let rightIndex = right.createIndex(0);
+
+  for (let i = 0; i < merged.size(); i++){
+
+    if (leftIndex.get() == left.size()){              //when there are no more elements left, in left array
+      merged.set(i, right.get(rightIndex.get()));
+      rightIndex.set(rightIndex.get()+1);
+    }
+    else if (rightIndex.get() == right.size()){       //when there are no more elements left in right array
+      merged.set(i, left.get(leftIndex));
+      leftIndex.set(leftIndex.get()+1);
+    }
+    else if (left.get(leftIndex) < right.get(rightIndex)){
+      merged.set(i, left.get(leftIndex));
+      leftIndex.set(leftIndex.get()+1);
+    }
+    else {
+      merged.set(i, right.get(rightIndex.get()));
+      rightIndex.set(rightIndex.get()+1);
+    }
+  }
+
+  return merged;
+}
+
+
+
 
 //ideally number should be E
 function dijkstra<V>(start: V, graph: LoggedGraph<V,number>) {
@@ -304,6 +344,15 @@ let array5 = log5.createArray(b);
 quickSort(array5);
 log5.write('log5.json');
 console.log("\n" + toString(array5));
+
+const log15 = new Logger();
+const c = [7,6,5,4,3,2,1];
+
+console.log(b);
+let array15 = log15.createArray(c);
+mergeSort(array15);
+log15.write('mergeSort.json');
+console.log("\nMergeSort: " + toString(array15));
 
 
 
@@ -482,9 +531,9 @@ adjList2.addEdge('H', 'E', 6);
 adjList2.addEdge('H', 'F', 9);
 
 const logger12 = new Logger();
-const dijkstraGraph: LoggedGraph<string, number> = logger12.createGraph<string,number>(adjListToGraph(adjList2));
-console.log(dijkstra('B', dijkstraGraph));
-logger12.write('dijkstra.json');
+//const dijkstraGraph: LoggedGraph<string, number> = logger12.createGraph<string,number>(adjListToGraph(adjList2));
+//console.log(dijkstra('B', dijkstraGraph));
+//logger12.write('dijkstra.json');
 
 const logger11 = new Logger();
 const x = logger11.createArray([1]);
@@ -517,3 +566,18 @@ logger13.write('arrScope2.json');
 arrScope.set(0, 3);
 logger13.write('arrScope3.json');
 
+
+/*
+   2
+ A----B
+ |\   |
+ | \3 |
+4|  \ |7
+ |   \|
+ C----D
+   5
+*/
+const logger14 = new Logger();
+//const dijkstraGraph2: LoggedGraph<string, number> = logger14.createGraph<string,number>(adjListToGraph(adjList));
+//console.log(dijkstra('B', dijkstraGraph2));
+//logger14.write('dijkstra2.json');
