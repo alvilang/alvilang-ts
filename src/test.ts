@@ -314,6 +314,39 @@ function dijkstra<V>(start: V, graph: LoggedGraph<V,number>) {
   return table;
 }
 
+function graphBFS<V,E>(start: V, graph: LoggedGraph<V,E>): V[] {
+  //setup for logger
+  const indexes = new Map<V,number>();
+  let i = 0;
+  const visitedArray: [V,boolean][]  = [];
+  for (const node of graph.getNodes()) {
+    indexes.set(node, i++);
+    visitedArray.push([node, false]);
+  }
+  visitedArray[indexes.get(start)!] = [start, true];
+
+  const result: V[] = [];
+  const visited = graph.getLogger().createArray<[V,boolean]>(visitedArray);
+  const queue = graph.getLogger().createQueue<V>(graph.getAllEdges().length);
+  queue.enqueue(start);
+
+  while (queue.size()) {
+    const currentNode = queue.dequeue();
+    result.push(currentNode);
+
+    for (const [edge, pointer] of graph.getEdgesFromNode(currentNode)) {
+      graph.getLogger().highlight([[graph, pointer]], () => {
+      if (!visited.get(indexes.get(edge.dst)!)[1]) {
+        queue.enqueue(edge.dst);
+        visited.set(indexes.get(edge.dst)!, [edge.dst, true]);
+      }
+      });
+    }
+  }
+
+  return result;
+}
+
 
 /*
 const log2 = new Logger();
@@ -531,9 +564,11 @@ adjList2.addEdge('H', 'E', 6);
 adjList2.addEdge('H', 'F', 9);
 
 const logger12 = new Logger();
-//const dijkstraGraph: LoggedGraph<string, number> = logger12.createGraph<string,number>(adjListToGraph(adjList2));
+const dijkstraGraph: LoggedGraph<string, number> = logger12.createGraph<string,number>(adjListToGraph(adjList2));
 //console.log(dijkstra('B', dijkstraGraph));
 //logger12.write('dijkstra.json');
+
+
 
 const logger11 = new Logger();
 const x = logger11.createArray([1]);
@@ -581,3 +616,28 @@ const logger14 = new Logger();
 //const dijkstraGraph2: LoggedGraph<string, number> = logger14.createGraph<string,number>(adjListToGraph(adjList));
 //console.log(dijkstra('B', dijkstraGraph2));
 //logger14.write('dijkstra2.json');
+
+/*
+  1----3
+ /|    |
+0 |    |
+ \|    |
+  2----4
+*/
+const adjList3 = new DirectedGraph<number, number>();
+adjList3.addNodes([0,1,2,3,4]);
+adjList3.addBiEdge(0,1,0);
+adjList3.addBiEdge(0,2,0);
+adjList3.addBiEdge(1,2,0);
+adjList3.addBiEdge(1,3,0);
+adjList3.addBiEdge(2,4,0);
+adjList3.addBiEdge(3,4,0);
+const bfsGraph: LoggedGraph<number, number> = logger14.createGraph<number,number>(adjListToGraph(adjList3));
+console.log(graphBFS(0, bfsGraph));
+logger14.write('graphBFS.json');
+
+console.log(graphBFS('B', dijkstraGraph));
+logger12.write('bigGraphBSF.json');
+
+
+Logger.registerAndWrite(Array.from(map), 'map.json');
