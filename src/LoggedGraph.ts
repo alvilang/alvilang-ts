@@ -99,5 +99,17 @@ export default class LoggedGraph<V,E> implements LoggedObject {
     return edgesAndIndices;
   }
 
+  public getAllEdges(): [WeightedEdge<V,E>, number][] {
+    const edgesAndIndices: [WeightedEdge<V,E>, number][] = [];
+    let index = 0;
+
+    for (const n of this.graph.getNodes()) {
+      const edges = this.graph.getEdgesFromNode(n);
+      edges.forEach(edge => edgesAndIndices.push([edge, index++]));
+    }
+
+    return edgesAndIndices;
+  }
+
 
 }
