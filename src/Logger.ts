@@ -292,7 +292,11 @@ export default class Logger {
     this.scopedStates.peek().push({...logVar});
   }
 
-  public createVar<T>(type: StateVariableType, value: T, name?: string, origin?: number): LoggedIndex<T> {
+  public createVar<T>(value: T, name?: string, origin?: number): LoggedIndex<T> {
+    let type = StateVariableType.STATIC;
+    if (origin) {
+      type = StateVariableType.POINTER;
+    }
     const id = this.getNextId();
     const logVar: LogVariable<unknown> = {
       origin,
