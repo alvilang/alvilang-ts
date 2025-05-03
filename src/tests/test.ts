@@ -1,12 +1,12 @@
-import Logger from './Logger';
-import LoggedArray from './LoggedArray';
-import { CompareOperator } from './types';
-import LoggedBST from './LoggedBST';
-import DirectedGraph from './lib/DirectedGraph';
-import LoggedGraph from './LoggedGraph';
-import { Edge, WeightedEdge, WeightedGraph } from './lib/Graph';
-import UndirectedGraph from './lib/UndirectedGraph';
-import Stack from './lib/Stack';
+import Logger from '../Logger';
+import LoggedArray from '../LoggedArray';
+import { CompareOperator } from '../types';
+import LoggedBST from '../LoggedBST';
+import DirectedGraph from '../lib/DirectedGraph';
+import LoggedGraph from '../LoggedGraph';
+import { Edge, WeightedEdge, WeightedGraph } from '../lib/Graph';
+import UndirectedGraph from '../lib/UndirectedGraph';
+import Stack from '../lib/Stack';
 
 //const log = new Logger();
 /*
