@@ -116,85 +116,30 @@ function quickSortHelper<T>(array: LoggedArray<T>, low: number, high: number) {
 
   array.swap(pivotIndex, high);
 
-  array.getLogger().compare(left, CompareOperator.LE, right);
-  while(left.get() <= right.get()) {
-    
+  while(left.get() <= right.get()) {    
     //find left number
-    array.getLogger().compare(left, CompareOperator.LE, right);
-    array.getLogger().compare([array, left.get()], CompareOperator.LT, [array, high]);
     while ((left.get() <= right.get()) && (array.get(left) < array.get(high))) {
       left.set(left.get()+1);
     }
-
     //find left number
-    array.getLogger().compare(right, CompareOperator.GE, left);
-    array.getLogger().compare([array, right.get()], CompareOperator.GT, [array, high]);
     while ((right.get() >= left.get()) && (array.get(right) > array.get(high))) {
       right.set(right.get()-1);
     }
 
     //if a swap should be performed
-    //array.mark(left, right, () => {
-    array.getLogger().compare(left, CompareOperator.LT, right);
     if (left.get() < right.get()) {
       array.swap(left, right);
       left.set(left.get()+1);
       right.set(right.get()-1);
     }
-    //});
-
-    /*
-
-    // What if the have different loggers? Should they be
-    // allowed to have different loggers?
-
-    Logger.if(() => i < j, i,{array,0}, () => {
-    
-          
-    });
-
-    static if(...args: Logged...[], condition: () => boolean, body: () => void) {
-      //use args to find logger object
-      const logger = ...;
-
-      //create 
-
-      logger.startScope();
-      if (condition()) {
-        body();
-      }
-      logger.endScope();
-    }
-
-    Logger.highlight(i, j, {array, 0}, () => {      
-      ...
-    });
-
-    Logger.highlight({array1,i}, {array2,j}, () => {
-      ...
-    });
-
-    array1.mark(i, () => {
-      array2.mark(j, () => {
-        if(...) {
-          ...
-        }      
-      });
-    });
-
-    */
   }
-
+  //swap pivot back to middle
   array.swap(left.get(), high);
 
   console.log("range: " + [low, left.get()-1]);
   Logger.recursion(() => quickSortHelper(array, low, left.get()-1), array); //range missing
   console.log("range: " + [left.get()+1, high]);
   Logger.recursion(() => quickSortHelper(array, left.get()+1, high), array);
-  /*
-  array.scope(() => quickSortHelper(array, low, left.get()-1));
-  array.scope(() => quickSortHelper(array, left.get()+1, high));
-  */
 }
 
 function medianOfThree<T>(array: LoggedArray<T>, low: number, high: number): number {
@@ -212,10 +157,10 @@ function mergeSort<V>(array: LoggedArray<V>): LoggedArray<V> {
   if (array.size() <= 1) return array;
 
   const [left, right] = array.split(Math.floor((array.size())/2));
-  const sortedLeft = Logger.recursion(() => mergeSort(left), left);
+  const sortedLeft  = Logger.recursion(() => mergeSort(left), left);
   const sortedRight = Logger.recursion(() => mergeSort(right), right);
 
-  return Logger.recursion(() => merge(sortedLeft, sortedRight), sortedLeft, sortedRight);
+  return merge(sortedLeft, sortedRight);
 }
 
 function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
@@ -373,13 +318,13 @@ const log5 = new Logger();
 const b = [7,6,5,4,3,2,1];
 
 console.log(b);
-let array5 = log5.createArray(b);
+let array5 = log5.createArray([3,2,1]);
 quickSort(array5);
 log5.write('log5.json');
 console.log("\n" + toString(array5));
 
 const log15 = new Logger();
-const c = [7,6,5,4,3,2,1];
+const c = [2,1];
 
 console.log(b);
 let array15 = log15.createArray(c);
