@@ -230,6 +230,12 @@ export default class Logger {
     logDestination.push(step);
   }
 
+  public scope(body: () => void) {
+    this.startScope();
+    body();
+    this.endScope();
+  }
+
   public startScope(scope: Scope = {type: 'Scope', subSteps: []}) {
     this.scopes.push(scope);
     this.scopedStates.push([]);
