@@ -132,7 +132,7 @@ export default class LoggedArray<T> implements LoggedObject {
       throw new RangeError();
     }
 
-    return this.logger.createVar(StateVariableType.POINTER, i, name, this.id);
+    return this.logger.createVar(i, name, this.id);
   }
 
   public apply<R>(fn: (this: T[], ...args: any[]) => R, ...args: any[]): R
