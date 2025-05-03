@@ -1,3 +1,4 @@
+/*
 import { Project, Node } from "ts-morph";
 import { writeFileSync } from "fs";
 
@@ -70,3 +71,4 @@ console.log("Total amount of nodes in logged implementation:", total_nodes2);
 
 writeFileSync("ast_standard.json", JSON.stringify(extract_node_info(sf1), null, 2));
 writeFileSync("ast_logged.json", JSON.stringify(extract_node_info(sf2), null, 2));
+*/
