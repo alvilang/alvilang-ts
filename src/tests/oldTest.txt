@@ -137,9 +137,9 @@ function quickSortHelper<T>(array: LoggedArray<T>, low: number, high: number) {
   array.swap(left.get(), high);
 
   console.log("range: " + [low, left.get()-1]);
-  Logger.recursion(() => quickSortHelper(array, low, left.get()-1), array); //range missing
+  Logger.functionCall(() => quickSortHelper(array, low, left.get()-1), array); //range missing
   console.log("range: " + [left.get()+1, high]);
-  Logger.recursion(() => quickSortHelper(array, left.get()+1, high), array);
+  Logger.functionCall(() => quickSortHelper(array, left.get()+1, high), array);
 }
 
 function medianOfThree<T>(array: LoggedArray<T>, low: number, high: number): number {
@@ -157,8 +157,8 @@ function mergeSort<V>(array: LoggedArray<V>): LoggedArray<V> {
   if (array.size() <= 1) return array;
 
   const [left, right] = array.split(Math.floor((array.size())/2));
-  const sortedLeft  = Logger.recursion(() => mergeSort(left), left);
-  const sortedRight = Logger.recursion(() => mergeSort(right), right);
+  const sortedLeft  = Logger.functionCall(() => mergeSort(left), left);
+  const sortedRight = Logger.functionCall(() => mergeSort(right), right);
 
   return merge(sortedLeft, sortedRight);
 }
