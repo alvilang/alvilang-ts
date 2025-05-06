@@ -47,46 +47,54 @@ export default class Logger {
     });
   }
 
-  public static recursion<T>(func: () => T, ...args: LoggedObject[]): T {  //LoggedObject
-    //saving their previous loggers to reassign after function, maybe we assume that all args have the same log?
-    //const oldLoggers: Logger[] = args.map(arg => arg.logger);
 
+  public static functionCall<T>
+  (
+    func: (...args: (LoggedObject | any)[]) => T,
+    ...args: (LoggedObject | any)[]
+  ): T {
+    function isLoggedObject(obj: any): obj is LoggedObject  {
+      return (
+        obj &&
+        typeof obj.getId === 'function' &&
+        typeof obj.toValue === 'function' &&
+        typeof obj.getLogger === 'function' &&
+        typeof obj.setLogger === 'function'
+      );
+    }
+
+    //1.) setting up map to reassign loggers after function is called
+    //2.) assigning new logger to logged objects
+    //3.) finding maxId for the new logger
     const oldLoggers: Map<Logger, number[]> = new Map();
+    const freshLogger = new Logger();
+    let currMaxNextId = 0;
 
     for(let i = 0; i < args.length; i++) {
-      const logger = args[i].getLogger();
-      if (oldLoggers.has(logger)) {
-        oldLoggers.get(logger)!.push(i);
-      } else {
-        oldLoggers.set(logger, [i]);
-      }
-    }
+      if (isLoggedObject(args[i])) {
+        const loggedObject: LoggedObject = args[i];
+        const logger = loggedObject.getLogger();
 
-    //create new logger for arguments to store their logs in
-    const recursionLogger = new Logger();
-
-    //find max id
-    if (args.length) {
-      let currMaxNextId = args[0].getLogger().nextId;
-      for (let i = 1; i < args.length; i++) {
-        if (args[i].getLogger().nextId > currMaxNextId) {
-          currMaxNextId = args[i].getLogger().nextId;
+        if (oldLoggers.has(logger)) {
+          oldLoggers.get(logger)!.push(i);
+        } else {
+          oldLoggers.set(logger, [i]);
         }
+
+        if (logger.nextId > currMaxNextId) {
+          currMaxNextId = logger.nextId;
+        }
+
+        loggedObject.setLogger(freshLogger);
+        freshLogger.registerLoggedObject(loggedObject, loggedObject.getId());
       }
-      //largest id from Logged arguments that are used in recursive call to ensure new arguments created
-      //in function get unused ids'
-      recursionLogger.nextId = currMaxNextId;
     }
+    freshLogger.nextId = currMaxNextId;
 
-    args.forEach(arg => {
-      arg.setLogger(recursionLogger);
-      recursionLogger.registerLoggedObject(arg, arg.getId());
-    });
+    const result = func(...args);
 
-    const result = func();
-
-    //??
-    args.forEach(arg => arg.setLogger(recursionLogger));
+    //TODO: simplify/fix this
+    args.forEach(arg => {if (isLoggedObject(arg)) arg.setLogger(freshLogger)});
 
     for (const [oldLogger, loggedObjectsIndices] of oldLoggers) {
       //TODO: range
@@ -96,11 +104,10 @@ export default class Logger {
       };
 
       oldLogger.startScope(recursionScope);
-      oldLogger.combine(recursionLogger);
+      oldLogger.combine(freshLogger);
       oldLogger.endScope();
-      //assigning new nextId to account for ids used in the recursion
-      oldLogger.nextId = recursionLogger.nextId;
-      //assigning previous logger to arguments
+      //assigning new nextId to account for ids used in the function
+      oldLogger.nextId = freshLogger.nextId;
       loggedObjectsIndices.forEach(i => args[i].setLogger(oldLogger));
     }
 
@@ -220,7 +227,7 @@ export default class Logger {
       finalState.push(newVariable);
     }
 
-    console.log(finalState);
+    //console.log(finalState);
 
     const step: StateDump = {
       type: 'StateDump',
