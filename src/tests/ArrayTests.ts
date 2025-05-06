@@ -1,7 +1,6 @@
 import LoggedArray from "../LoggedArray";
 import Logger from "../Logger";
 
-
 //-------------------------------------------------------------------//
 //Sorting algorithms
 
@@ -51,10 +50,8 @@ function quickSortHelper<T>(array: LoggedArray<T>, low: number, high: number) {
   //swap pivot back to middle
   array.swap(left.get(), high);
 
-  console.log("range: " + [low, left.get()-1]);
-  Logger.recursion(() => quickSortHelper(array, low, left.get()-1), array); //range missing
-  console.log("range: " + [left.get()+1, high]);
-  Logger.recursion(() => quickSortHelper(array, left.get()+1, high), array);
+  Logger.functionCall(quickSortHelper, array, low, left.get()-1);
+  Logger.functionCall(quickSortHelper, array, left.get()+1, high);
 }
 
 function medianOfThree<T>(array: LoggedArray<T>, low: number, high: number): number {
@@ -68,16 +65,14 @@ function medianOfThree<T>(array: LoggedArray<T>, low: number, high: number): num
   return high;
 }
 
-
-//This does not log correctly yet, do not use it
 function mergeSort<V>(array: LoggedArray<V>): LoggedArray<V> {
   if (array.size() <= 1) return array;
 
   const [left, right] = array.split(Math.floor((array.size())/2));
-  const sortedLeft  = Logger.recursion(() => mergeSort(left), left);
-  const sortedRight = Logger.recursion(() => mergeSort(right), right);
+  const sortedLeft  = Logger.functionCall(mergeSort, left);
+  const sortedRight = Logger.functionCall(mergeSort, right);
 
-  return merge(sortedLeft, sortedRight);
+  return Logger.functionCall<LoggedArray<V>>(merge, sortedLeft, sortedRight);;
 }
 
 function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
@@ -86,12 +81,11 @@ function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
   let rightIndex = right.createIndex(0);
 
   for (let i = 0; i < merged.size(); i++){
-
-    if (leftIndex.get() == left.size()){              //when there are no more elements left, in left array
+    if (leftIndex.get() == left.size()){
       merged.set(i, right.get(rightIndex.get()));
       rightIndex.set(rightIndex.get()+1);
     }
-    else if (rightIndex.get() == right.size()){       //when there are no more elements left in right array
+    else if (rightIndex.get() == right.size()){
       merged.set(i, left.get(leftIndex));
       leftIndex.set(leftIndex.get()+1);
     }
@@ -106,6 +100,15 @@ function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
   }
 
   return merged;
+}
+
+//-------------------------------------------------------------------//
+//Other array-functions
+
+function reverse <T>(array: LoggedArray <T>, start: number, end: number): void {
+  if (start >= end) return;
+  array.swap(start, end);
+  Logger.functionCall(reverse,array, start+1, end-1)
 }
 
 
@@ -142,31 +145,52 @@ function toString(array: LoggedArray<any> | any[]): string {
 }
 
 //-------------------------------------------------------------------//
-//Main test function
+//Main test function for sorting algorithms
 function sortAndLog<T>
 (
   algorithm: (arg: LoggedArray<T>) => LoggedArray<T> | void,
   array: T[],
   fileName: string
-): LoggedArray<T> | void {
+): LoggedArray<T> {
   const logger = new Logger();
-  const loggedArray = logger.createArray(array);
+  let loggedArray = logger.createArray(array);
   const result = algorithm(loggedArray);
-  console.log("Original: " + toString(array));
-  console.log("Result:   " + toString(loggedArray));
+  if (result instanceof LoggedArray) {loggedArray = result;}
+  console.log("Original:  " + toString(array));
+  console.log("Result:    " + toString(loggedArray) + "\n");
   logger.write(fileName);
-  if (result instanceof LoggedArray) return result;
+  return loggedArray;
+}
+
+//Default test function for any algorithm
+function applyAndLog<T,R>
+(
+  algorithm: (...args: (LoggedArray<T> | any)[]) => R,
+  args: (T[] | any)[],
+  fileName: string
+): R {
+  const logger = new Logger();
+  const preparedArgs = args.map(arg => {
+    if (arg instanceof Array) return logger.createArray(arg);
+    return arg;
+  });
+  const result = algorithm(...preparedArgs);
+  logger.write(fileName);
+  return result;
 }
 
 //-------------------------------------------------------------------//
-//Tests: sort(algorithm,array);
+//Tests: sort(algorithm, array, filename);
 
 sortAndLog(insertionSort, [3,2,1], "insertionSort1.json");
 
 
-//sortAndLog(quickSort, [3,2,1], "quickSort1.json");
+sortAndLog(quickSort, [3,2,1], "quickSort1.json");
 //sortAndLog(quickSort, [7,6,5,4,3,2,1], "quickSort2.json");
+//sortAndLog(quickSort, arrayFrom(7, (i) => i > 0, (i) => i-1), "quickSort3.json");
 
-sortAndLog(quickSort, arrayFrom(7, (i) => i > 0, (i) => i-1), "quickSort3.json");
+//sortAndLog(mergeSort, [4,3], "mergeSort1.json");
 
+
+applyAndLog(reverse, [[1,2,3,4,5], 0, 4], "reverse1.json");
 
