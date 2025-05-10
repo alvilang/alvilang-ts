@@ -5,12 +5,12 @@ import Logger from "../Logger";
 //Sorting algorithms
 
 function insertionSort<T>(array: LoggedArray<T>) {
-  for (let i = array.createIndex(1); i.get() < array.size(); i.set(i.get() + 1)) {
+  for (let i = array.createIndex(1); i.get() < array.size(); i.modify(x => x+1)) {
     array.getLogger().scope(() => {
-    let j = array.createIndex(i.get());
-    while (j.get() > 0 && array.get(j.get() - 1) > array.get(j.get())) {
-      array.swap(j.get()-1,j.get());
-      j.set(j.get()-1);
+    let j = array.createIndex(i);
+    while (j.get() > 0 && array.get(j.get() - 1) > array.get(j)) {
+      array.swap(j.get()-1,j);
+      j.modify(j => j-1);
     }
     });
   }
@@ -33,22 +33,22 @@ function quickSortHelper<T>(array: LoggedArray<T>, low: number, high: number) {
   while(left.get() <= right.get()) {    
     //find left number
     while ((left.get() <= right.get()) && (array.get(left) < array.get(high))) {
-      left.set(left.get()+1);
+      left.modify(x => x+1);
     }
     //find left number
     while ((right.get() >= left.get()) && (array.get(right) > array.get(high))) {
-      right.set(right.get()-1);
+      right.modify(x => x-1);
     }
 
     //if a swap should be performed
     if (left.get() < right.get()) {
       array.swap(left, right);
-      left.set(left.get()+1);
-      right.set(right.get()-1);
+      left.modify(x => x+1);
+      right.modify(x => x-1);
     }
   }
   //swap pivot back to middle
-  array.swap(left.get(), high);
+  array.swap(left, high);
 
   Logger.functionCall(quickSortHelper, array, low, left.get()-1);
   Logger.functionCall(quickSortHelper, array, left.get()+1, high);
@@ -72,7 +72,7 @@ function mergeSort<V>(array: LoggedArray<V>): LoggedArray<V> {
   const sortedLeft  = Logger.functionCall(mergeSort, left);
   const sortedRight = Logger.functionCall(mergeSort, right);
 
-  return Logger.functionCall<LoggedArray<V>>(merge, sortedLeft, sortedRight);;
+  return Logger.functionCall<LoggedArray<V>>(merge, sortedLeft, sortedRight);
 }
 
 function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
@@ -82,20 +82,20 @@ function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
 
   for (let i = 0; i < merged.size(); i++){
     if (leftIndex.get() == left.size()){
-      merged.set(i, right.get(rightIndex.get()));
-      rightIndex.set(rightIndex.get()+1);
+      merged.set(i, right.get(rightIndex));
+      rightIndex.modify(x => x+1);
     }
     else if (rightIndex.get() == right.size()){
       merged.set(i, left.get(leftIndex));
-      leftIndex.set(leftIndex.get()+1);
+      leftIndex.modify(x => x+1);
     }
     else if (left.get(leftIndex) < right.get(rightIndex)){
       merged.set(i, left.get(leftIndex));
-      leftIndex.set(leftIndex.get()+1);
+      leftIndex.modify(x => x+1);
     }
     else {
-      merged.set(i, right.get(rightIndex.get()));
-      rightIndex.set(rightIndex.get()+1);
+      merged.set(i, right.get(rightIndex));
+      rightIndex.modify(x => x+1);
     }
   }
 
@@ -182,15 +182,15 @@ function applyAndLog<T,R>
 //-------------------------------------------------------------------//
 //Tests: sort(algorithm, array, filename);
 
-sortAndLog(insertionSort, [3,2,1], "insertionSort1.json");
+//sortAndLog(insertionSort, [5,2,6,1,3], "insertionSort1.json");
 
 
-sortAndLog(quickSort, [3,2,1], "quickSort1.json");
+//sortAndLog(quickSort, [3,2,1], "quickSort1.json");
 //sortAndLog(quickSort, [7,6,5,4,3,2,1], "quickSort2.json");
 //sortAndLog(quickSort, arrayFrom(7, (i) => i > 0, (i) => i-1), "quickSort3.json");
 
 //sortAndLog(mergeSort, [4,3], "mergeSort1.json");
 
-
 applyAndLog(reverse, [[1,2,3,4,5], 0, 4], "reverse1.json");
+applyAndLog(reverse, [[1], 0, 0], "reverse2.json");
 
