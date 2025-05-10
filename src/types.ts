@@ -28,6 +28,7 @@ export type StateVariable<T> = {
   name?: string;
   origin?: number;
   type: StateVariableType;
+  description: string;
   value: T;
 };
 
