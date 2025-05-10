@@ -1,7 +1,6 @@
 import Logger from "./Logger";
 
-
-
+//TODO: implement LoggedObject?
 export default class LoggedIndex<T> {
   private value: T;
   private logger: Logger;
@@ -15,7 +14,11 @@ export default class LoggedIndex<T> {
 
   public set(newValue: T): void {
     this.value = newValue;
+    this.logger.logChange(this.id, this.value);
+  }
 
+  public modify(f: (arg: T) => T): void {
+    this.value = f(this.value);
     this.logger.logChange(this.id, this.value);
   }
 
