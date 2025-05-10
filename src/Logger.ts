@@ -1,9 +1,13 @@
 import { writeFile } from 'fs';
 import Stack from './lib/Stack';
+import { WeightedGraph } from './lib/Graph';
 import LoggedArray from './LoggedArray';
 import LoggedIndex from './LoggedIndex';
 import LoggedCircularArrayQueue from './LoggedCircularArrayQueue';
 import LoggedArrayStack from './LoggedArrayStack';
+import LoggedBST from './LoggedBST';
+import LoggedGraph from './LoggedGraph';
+import LoggedTable from './LoggedTable';
 import {
   TraceStep,
   StateVariableType,
@@ -17,9 +21,6 @@ import {
   HighlightScope,
   RecursionScope
 } from './types';
-import LoggedBST from './LoggedBST';
-import LoggedGraph from './LoggedGraph';
-import { WeightedGraph } from './lib/Graph';
 
 export default class Logger {
   private trace: Trace = { steps: [] };
@@ -40,13 +41,48 @@ export default class Logger {
   }
 
   public write(logFile: string = 'log.json') {
+    const oneLinedKeys = new Set(['value', 'data', 'subjects', 'highlighted']);
+    const preProcessed = this.stringifyWithKeySpacing(this.trace, 2, oneLinedKeys);
+    writeFile("compact" + logFile, preProcessed, (err) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+    /*
+    //previous version
     writeFile(logFile, JSON.stringify(this.trace, null, 2), (err) => {
       if (err) {
         console.error(err);
       }
     });
+    */
   }
 
+  private stringifyWithKeySpacing(obj: any, indent = 2, inlineKeys = new Set<string>(), level = 0): string {
+    //Add the following replace-call to make all state variables one-liners.
+    // .replace(/,\s/, ', ')
+    //OneLinedElements: "state"
+    
+    const pad = ' '.repeat(level * indent);
+    if (Array.isArray(obj)) {
+      const content = obj.map(v => this.stringifyWithKeySpacing(v, indent, inlineKeys, level + 1)).join(',');
+      return `[${content}${obj.length?'\n'+pad:''}]`;
+    }
+  
+    if (typeof obj === 'object' && obj !== null) {
+      const entries = Object.entries(obj).map(([key, value]) => {
+        const shouldInline = inlineKeys.has(key);
+        const serializedValue = shouldInline
+          ? JSON.stringify(value).replace(/:/g, ': ').replace(/],"/g, '], \"').replace(/},"/g, '}, \"')
+          : this.stringifyWithKeySpacing(value, indent, inlineKeys, level + 1);
+        return `${' '.repeat((level + 1) * indent)}"${key}": ${serializedValue}`;
+      });
+  
+      return `${level?'\n':""}${pad}{\n${entries.join(',\n')}\n${pad}}`;
+    }
+  
+    return JSON.stringify(obj);
+  }
 
   public static functionCall<T>
   (
@@ -54,13 +90,11 @@ export default class Logger {
     ...args: (LoggedObject | any)[]
   ): T {
     function isLoggedObject(obj: any): obj is LoggedObject  {
-      return (
-        obj &&
+      return obj &&
         typeof obj.getId === 'function' &&
         typeof obj.toValue === 'function' &&
         typeof obj.getLogger === 'function' &&
-        typeof obj.setLogger === 'function'
-      );
+        typeof obj.setLogger === 'function';
     }
 
     //1.) setting up map to reassign loggers after function is called
@@ -85,8 +119,9 @@ export default class Logger {
           currMaxNextId = logger.nextId;
         }
 
+        const currId = loggedObject.getId();
         loggedObject.setLogger(freshLogger);
-        freshLogger.registerLoggedObject(loggedObject, loggedObject.getId());
+        freshLogger.registerLoggedObject(logger.search(currId)!.description, loggedObject, currId);
       }
     }
     freshLogger.nextId = currMaxNextId;
@@ -119,8 +154,7 @@ export default class Logger {
     logger.trace.steps.forEach(step => logDest.push(step));
   }
 
-
-  public highlight(args: ([LoggedObject, any] | LoggedIndex<unknown>)[], body: () => void): void {
+  public highlight(args: ([LoggedObject, any] | LoggedIndex<unknown>)[], block: () => void): void {
     const highlighted: ([number,any] | number)[] = [];
     const highlightScope: HighlightScope = {
       type: 'Scope',
@@ -137,7 +171,7 @@ export default class Logger {
     }
 
     this.startScope(highlightScope);
-    body();
+    block();
     this.endScope();
   }
 
@@ -198,21 +232,20 @@ export default class Logger {
   }
 
 
-  /*
-  TODO: id issue
-  potential reasons:
-   * the order of the elements in the for loops
-   * the order of the calls in logChange
-  */
+ 
   private updateVar<T>(id: number, newValue: T): void {
+    this.search(id)!.value = newValue;
+  }
+
+  private search(id: number): LogVariable<unknown> | undefined {
     for (const logVarArray of this.scopedStates) {
       for (const logVar of logVarArray) {
         if (logVar.id == id) {
-          logVar.value = newValue;
-          return;
+          return logVar;
         }
       }
     }
+    return undefined;
   }
 
   private logStep(newVariable?: LogVariable<unknown>) {
@@ -237,9 +270,9 @@ export default class Logger {
     logDestination.push(step);
   }
 
-  public scope(body: () => void) {
+  public scope(block: () => void) {
     this.startScope();
-    body();
+    block();
     this.endScope();
   }
 
@@ -263,7 +296,7 @@ export default class Logger {
   public createGraph<V,E>(graph?: WeightedGraph<V,E>): LoggedGraph<V,E> {
     const id = this.getNextId();
     const loggedGraph = new LoggedGraph<V,E>(id, this, graph);
-    this.registerLoggedObject(loggedGraph, id);
+    this.registerLoggedObject("graph", loggedGraph, id);
 
     return loggedGraph;
   }
@@ -271,31 +304,40 @@ export default class Logger {
   public createBST<T>(): LoggedBST<T> {
     const id = this.getNextId();
     const tree = new LoggedBST<T>(id, this);
-    this.registerLoggedObject(tree, id);
+    this.registerLoggedObject("binary tree", tree, id);
 
     return tree;
   }
 
+  public createTable<K,V>(): LoggedTable<K,V> {
+    const loggedArray = this.createArrayHelper("table", []);
+    return new LoggedTable(loggedArray);
+  }
+
   public createQueue<T>(capacity: number): LoggedCircularArrayQueue<T> {
-    return new LoggedCircularArrayQueue<T>(this.createArray(Array(capacity).fill(null)));
+    const loggedArray = this.createArrayHelper("queue", Array(capacity).fill(null));
+    return new LoggedCircularArrayQueue<T>(loggedArray);
   }
 
   public createStack<T>(capacity: number): LoggedArrayStack<T> {
-    return new LoggedArrayStack<T>(this.createArray(Array(capacity).fill(null)));
-    
+    const loggedArray = this.createArrayHelper("stack", Array(capacity).fill(null));
+    return new LoggedArrayStack<T>(loggedArray);
   }
 
   public createArray<T>(array: T[]): LoggedArray<T> {
+    return this.createArrayHelper("array", array);
+  }
+
+  private createArrayHelper<T>(description: string, array: T[]): LoggedArray<T> {
     const id = this.getNextId();
     const loggedArray = new LoggedArray<T>(array, id, this);
-    this.registerLoggedObject(loggedArray, id);
-
+    this.registerLoggedObject(description, loggedArray, id);
     return loggedArray;
   }
 
-
-  private registerLoggedObject(loggedObject: LoggedObject, id: number): void {
+  private registerLoggedObject(description: string, loggedObject: LoggedObject, id: number): void {
     const logVar: LogVariable<unknown> = {
+      description,
       type: StateVariableType.STATIC,
       value: loggedObject.toValue(),
       id
@@ -312,11 +354,16 @@ export default class Logger {
     }
     const id = this.getNextId();
     const logVar: LogVariable<unknown> = {
+      description: "variable",
       origin,
       type,
       value,
       id
     };
+
+    if (name) {
+      logVar.name = name;
+    }
 
     this.logStep({...logVar});
     this.scopedStates.peek().push({...logVar});
@@ -328,6 +375,7 @@ export default class Logger {
     const logger = new Logger();
     const id = logger.getNextId();
     const logVar: LogVariable<unknown> = {
+      description: "Random object",
       type: StateVariableType.STATIC,
       value: o,
       id
