@@ -85,7 +85,7 @@ function graphBFS<V,E>(start: V, graph: LoggedGraph<V,E>): V[] {
   }
   visitedArray[indexes.get(start)!] = [start, true];
 
-  const result: V[] = [];
+  const result: V[] = []; //convert to LoggedArray<V>?
   const visited = graph.getLogger().createArray<[V,boolean]>(visitedArray);
   const queue = graph.getLogger().createQueue<V>(graph.getAllEdges().length);
   queue.enqueue(start);
@@ -107,6 +107,34 @@ function graphBFS<V,E>(start: V, graph: LoggedGraph<V,E>): V[] {
   return result;
 }
 
+function graphBFS2<V,E>(start: V, graph: LoggedGraph<V,E>): V[] {
+  const logger = graph.getLogger();
+  const bfsPath: V[] = []; //convert to LoggedArray<V>?
+  const table = logger.createTable<V,boolean>();
+  const queue = logger.createQueue<V>(graph.getAllEdges().length);  
+
+  graph.getNodes().forEach(node => table.set(node, false));
+  table.set(start, true);
+  queue.enqueue(start);
+
+  while (queue.size()) {
+    const currentNode = queue.dequeue();
+    bfsPath.push(currentNode);
+
+    //highlight node as well?
+
+    for (const [edge, pointer] of graph.getEdgesFromNode(currentNode)) {
+      logger.highlight([[graph, pointer]], () => {
+      if (!table.get(edge.dst)!) {
+        queue.enqueue(edge.dst);
+        table.set(edge.dst, true);
+      }
+      });
+    }
+  }
+
+  return bfsPath;
+}
 
 //-------------------------------------------------------------------//
 //Auxiliary functions
@@ -239,6 +267,7 @@ function logGraph<V,E,R>
   return result;
 }
 
-logGraph(graphBFS, 0, graph2, "graphBFS_1.json");
-logGraph(dijkstra, 'B', graph1, "graphDijkstra_1.json");
+//logGraph(graphBFS, 0, graph2, "graphBFS_1.json");
+logGraph(graphBFS2, 0, graph2, "graphBFS_2.json");
+//logGraph(dijkstra, 'B', graph1, "graphDijkstra_1.json");
 
