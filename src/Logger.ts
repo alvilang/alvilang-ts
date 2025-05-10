@@ -43,7 +43,7 @@ export default class Logger {
   public write(logFile: string = 'log.json') {
     const oneLinedKeys = new Set(['value', 'data', 'subjects', 'highlighted']);
     const preProcessed = this.stringifyWithKeySpacing(this.trace, 2, oneLinedKeys);
-    writeFile("compact" + logFile, preProcessed, (err) => {
+    writeFile(logFile, preProcessed, (err) => {
       if (err) {
         console.error(err);
       }
