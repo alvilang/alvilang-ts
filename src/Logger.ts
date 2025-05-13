@@ -61,7 +61,7 @@ export default class Logger {
   private stringifyWithKeySpacing(obj: any, indent = 2, inlineKeys = new Set<string>(), level = 0): string {
     //Add the following replace-call to make all state variables one-liners.
     // .replace(/,\s/, ', ')
-    //OneLinedElements: "state"
+    //inlineElements: "state"
     
     const pad = ' '.repeat(level * indent);
     if (Array.isArray(obj)) {
@@ -88,7 +88,8 @@ export default class Logger {
   (
     func: (...args: (LoggedObject | any)[]) => T,
     ...args: (LoggedObject | any)[]
-  ): T {
+  ): T
+  {
     function isLoggedObject(obj: any): obj is LoggedObject  {
       return obj &&
         typeof obj.getId === 'function' &&
@@ -349,7 +350,7 @@ export default class Logger {
 
   public createVar<T>(value: T, name?: string, origin?: number): LoggedIndex<T> {
     let type = StateVariableType.STATIC;
-    if (origin) {
+    if (origin != undefined) {
       type = StateVariableType.POINTER;
     }
     const id = this.getNextId();
