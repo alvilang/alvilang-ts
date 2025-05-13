@@ -23,7 +23,7 @@ function quickSort<T>(array: LoggedArray<T>) {
 
 function quickSortHelper<T>(array: LoggedArray<T>, low: number, high: number) {
   if (low >= high) return;
-  //declare range
+  //TODO: declare range
   let left  = array.createIndex(low, "left");
   let right = array.createIndex(high-1, "right");
   const pivotIndex = array.createIndex(medianOfThree(array, low, high), "pivotIndex");
@@ -72,7 +72,7 @@ function mergeSort<V>(array: LoggedArray<V>): LoggedArray<V> {
   const sortedLeft  = Logger.functionCall(mergeSort, left);
   const sortedRight = Logger.functionCall(mergeSort, right);
 
-  return Logger.functionCall<LoggedArray<V>>(merge, sortedLeft, sortedRight);
+  return Logger.functionCall(merge, sortedLeft, sortedRight);
 }
 
 function merge<V>(left: LoggedArray<V>, right: LoggedArray<V>): LoggedArray<V> {
@@ -189,7 +189,7 @@ function applyAndLog<T,R>
 //sortAndLog(quickSort, [7,6,5,4,3,2,1], "quickSort2.json");
 //sortAndLog(quickSort, arrayFrom(7, (i) => i > 0, (i) => i-1), "quickSort3.json");
 
-//sortAndLog(mergeSort, [4,3], "mergeSort1.json");
+sortAndLog(mergeSort, [4,3], "mergeSort1.json");
 
 applyAndLog(reverse, [[1,2,3,4,5], 0, 4], "reverse1.json");
 applyAndLog(reverse, [[1], 0, 0], "reverse2.json");

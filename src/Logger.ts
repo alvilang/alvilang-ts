@@ -84,12 +84,11 @@ export default class Logger {
     return JSON.stringify(obj);
   }
 
-  public static functionCall<T>
-  (
-    func: (...args: (LoggedObject | any)[]) => T,
-    ...args: (LoggedObject | any)[]
-  ): T
-  {
+  //TODO: check if this always works?
+  public static functionCall<Args extends any[], R>(
+    func: (...args: Args) => R,
+    ...args: Args
+  ): R {
     function isLoggedObject(obj: any): obj is LoggedObject  {
       return obj &&
         typeof obj.getId === 'function' &&
