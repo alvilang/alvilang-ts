@@ -110,24 +110,22 @@ function graphBFS<V,E>(start: V, graph: LoggedGraph<V,E>): V[] {
 function graphBFS2<V,E>(start: V, graph: LoggedGraph<V,E>): V[] {
   const logger = graph.getLogger();
   const bfsPath: V[] = []; //convert to LoggedArray<V>?
-  const table = logger.createTable<V,boolean>();
-  const queue = logger.createQueue<V>(graph.getAllEdges().length);  
+  const visitedTable = logger.createTable<V,boolean>();
+  const queue = logger.createQueue<V>(graph.getAllEdges().length);
 
-  graph.getNodes().forEach(node => table.set(node, false));
-  table.set(start, true);
+  graph.getNodes().forEach(node => visitedTable.set(node, false));
+  visitedTable.set(start, true);
   queue.enqueue(start);
 
   while (queue.size()) {
     const currentNode = queue.dequeue();
     bfsPath.push(currentNode);
 
-    //highlight node as well?
-
     for (const [edge, pointer] of graph.getEdgesFromNode(currentNode)) {
       logger.highlight([[graph, pointer]], () => {
-      if (!table.get(edge.dst)!) {
+      if (!visitedTable.get(edge.dst)) {
         queue.enqueue(edge.dst);
-        table.set(edge.dst, true);
+        visitedTable.set(edge.dst, true);
       }
       });
     }
