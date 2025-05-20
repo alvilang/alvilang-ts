@@ -1,5 +1,5 @@
 import Logger from './Logger';
-import LoggedIndex from './LoggedIndex';
+import LoggedVariable from './LoggedVariable';
 import { LoggedObject, Scope, StateVariableType } from './types';
 
 /**
@@ -50,9 +50,9 @@ export default class LoggedArray<T> implements LoggedObject {
     return [...this.array];
   }
 
-  public swap(i: number | LoggedIndex<number>, j: number | LoggedIndex<number>): void {
-    if (i instanceof LoggedIndex) i = i.get();
-    if (j instanceof LoggedIndex) j = j.get();
+  public swap(i: number | LoggedVariable<number>, j: number | LoggedVariable<number>): void {
+    if (i instanceof LoggedVariable) i = i.get();
+    if (j instanceof LoggedVariable) j = j.get();
     [this.array[i], this.array[j]] = [this.array[j], this.array[i]];
 
     //update log
@@ -61,14 +61,14 @@ export default class LoggedArray<T> implements LoggedObject {
     this.logger.logChange(this.id, [...this.array]);
   }
 
-  public set(index: number | LoggedIndex<number>, value: T): void {
-    if (index instanceof LoggedIndex) index = index.get();
+  public set(index: number | LoggedVariable<number>, value: T): void {
+    if (index instanceof LoggedVariable) index = index.get();
     this.array[index] = value;
     this.logger.logChange(this.id, [...this.array]);
   }
 
-  public get(index: number | LoggedIndex<number>): T {
-    if (index instanceof LoggedIndex) index = index.get();
+  public get(index: number | LoggedVariable<number>): T {
+    if (index instanceof LoggedVariable) index = index.get();
 
     return this.array[index];
   }
@@ -97,8 +97,8 @@ export default class LoggedArray<T> implements LoggedObject {
   forall j in [0, i-1]:           arr[j] == arr1[j]
   forall j in [i, arr.length-1]:  arr[j] == arr2[j]
   */
-  public split(i: number | LoggedIndex<number>): [LoggedArray<T>, LoggedArray<T>] {
-    if (i instanceof LoggedIndex) i = i.get();
+  public split(i: number | LoggedVariable<number>): [LoggedArray<T>, LoggedArray<T>] {
+    if (i instanceof LoggedVariable) i = i.get();
     if (i < 0 || this.array.length <= i) {
       throw new RangeError();
     }
@@ -116,17 +116,17 @@ export default class LoggedArray<T> implements LoggedObject {
     return [this.slice(0,i), this.slice(i)];
   }
 
-  public slice(start?: number | LoggedIndex<number>, end?: number | LoggedIndex<number>): LoggedArray<T> {
-    if (start instanceof LoggedIndex) start = start.get();
-    if (end instanceof LoggedIndex) end = end.get();
+  public slice(start?: number | LoggedVariable<number>, end?: number | LoggedVariable<number>): LoggedArray<T> {
+    if (start instanceof LoggedVariable) start = start.get();
+    if (end instanceof LoggedVariable) end = end.get();
 
     //animationStep for slice too?
 
     return this.logger.createArray(this.array.slice(start, end));
   }
 
-  public createIndex(i: number | LoggedIndex<number>, name?: string): LoggedIndex<number> {
-    if (i instanceof LoggedIndex) i = i.get();
+  public createIndex(i: number | LoggedVariable<number>, name?: string): LoggedVariable<number> {
+    if (i instanceof LoggedVariable) i = i.get();
 
     if (i < 0 || this.array.length <= i) {
       throw new RangeError();

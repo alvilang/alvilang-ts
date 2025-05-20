@@ -1,7 +1,7 @@
 import Logger from "./Logger";
 
 //TODO: implement LoggedObject?
-export default class LoggedIndex<T> {
+export default class LoggedVariable<T> {
   private value: T;
   private logger: Logger;
   private readonly id: number;

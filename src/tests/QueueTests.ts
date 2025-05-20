@@ -1,4 +1,4 @@
-import LoggedCircularArrayQueue from "../LoggedCircularArrayQueue";
+import LoggedArrayQueue from "../LoggedArrayQueue";
 import Logger from "../Logger";
 
 

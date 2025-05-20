@@ -1,11 +1,11 @@
 import LoggedArray from "./LoggedArray";
-import LoggedIndex from "./LoggedIndex";
+import LoggedVariable from "./LoggedVariable";
 import Logger from "./Logger";
 import { LoggedObject } from "./types";
 
 export default class LoggedArrayStack<T> implements LoggedObject{
   private readonly stack: LoggedArray<T>;
-  private front: LoggedIndex<number>;
+  private front: LoggedVariable<number>;
 
   public constructor(stack: LoggedArray<T>) {
     this.stack = stack;

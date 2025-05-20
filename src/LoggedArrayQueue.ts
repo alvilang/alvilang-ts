@@ -1,5 +1,5 @@
 import LoggedArray from "./LoggedArray";
-import LoggedIndex from "./LoggedIndex";
+import LoggedVariable from "./LoggedVariable";
 import Logger from "./Logger";
 import { LoggedObject } from "./types";
 
@@ -56,12 +56,12 @@ import { LoggedObject } from "./types";
 }
 */
 
-export default class LoggedCircularArrayQueue<T> implements LoggedObject {
+export default class LoggedArrayQueue<T> implements LoggedObject {
   private readonly capacity: number;
   private queue: LoggedArray<T>;
   private items: number;  //logged number or not logged at all?
-  private head: LoggedIndex<number>;
-  private tail: LoggedIndex<number>;
+  private head: LoggedVariable<number>;
+  private tail: LoggedVariable<number>;
 
   public constructor(queue: LoggedArray<T>) {
     this.capacity = queue.size();

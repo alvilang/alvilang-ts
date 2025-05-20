@@ -2,8 +2,8 @@ import { writeFile } from 'fs';
 import Stack from './lib/Stack';
 import { WeightedGraph } from './lib/Graph';
 import LoggedArray from './LoggedArray';
-import LoggedIndex from './LoggedIndex';
-import LoggedCircularArrayQueue from './LoggedCircularArrayQueue';
+import LoggedVariable from './LoggedVariable';
+import LoggedArrayQueue from './LoggedArrayQueue';
 import LoggedArrayStack from './LoggedArrayStack';
 import LoggedBST from './LoggedBST';
 import LoggedGraph from './LoggedGraph';
@@ -154,7 +154,7 @@ export default class Logger {
     logger.trace.steps.forEach(step => logDest.push(step));
   }
 
-  public highlight(args: ([LoggedObject, any] | LoggedIndex<unknown>)[], block: () => void): void {
+  public highlight(args: ([LoggedObject, any] | LoggedVariable<unknown>)[], block: () => void): void {
     const highlighted: ([number,any] | number)[] = [];
     const highlightScope: HighlightScope = {
       type: 'Scope',
@@ -163,7 +163,7 @@ export default class Logger {
     }
 
     for (const arg of args) {
-      if (arg instanceof LoggedIndex) {
+      if (arg instanceof LoggedVariable) {
         highlighted.push(arg.getId());
       } else {
         highlighted.push([arg[0].getId(), arg[1]]);
@@ -176,9 +176,9 @@ export default class Logger {
   }
 
   //TODO: comparison of primitive values directly, 5 < 4 etc...
-  public compare<T,E>(arg1: [LoggedObject, any] | LoggedIndex<T> | any,
+  public compare<T,E>(arg1: [LoggedObject, any] | LoggedVariable<T> | any,
                       op: CompareOperator,
-                      arg2: [LoggedObject, any] | LoggedIndex<E> | any): void
+                      arg2: [LoggedObject, any] | LoggedVariable<E> | any): void
   {
     type pointer = { pointerData: any };
     type data = {
@@ -191,7 +191,7 @@ export default class Logger {
     const compareData: data = { op };
 
 
-    if (arg1 instanceof LoggedIndex) {
+    if (arg1 instanceof LoggedVariable) {
       subjects.push(arg1.getId());
     } else if (arg1 instanceof Array) {
       subjects.push(arg1[0].getId());
@@ -199,7 +199,7 @@ export default class Logger {
     } else {
       compareData.arg1 = arg1;
     }
-    if (arg2 instanceof LoggedIndex) {
+    if (arg2 instanceof LoggedVariable) {
       subjects.push(arg2.getId());
     } else if (arg2 instanceof Array) {
       subjects.push(arg2[0].getId());
@@ -314,9 +314,9 @@ export default class Logger {
     return new LoggedTable(loggedArray);
   }
 
-  public createQueue<T>(capacity: number): LoggedCircularArrayQueue<T> {
+  public createQueue<T>(capacity: number): LoggedArrayQueue<T> {
     const loggedArray = this.createArrayHelper("queue", Array(capacity).fill(null));
-    return new LoggedCircularArrayQueue<T>(loggedArray);
+    return new LoggedArrayQueue<T>(loggedArray);
   }
 
   public createStack<T>(capacity: number): LoggedArrayStack<T> {
@@ -347,7 +347,7 @@ export default class Logger {
     this.scopedStates.peek().push({...logVar});
   }
 
-  public createVar<T>(value: T, name?: string, origin?: number): LoggedIndex<T> {
+  public createVar<T>(value: T, name?: string, origin?: number): LoggedVariable<T> {
     let type = StateVariableType.STATIC;
     if (origin != undefined) {
       type = StateVariableType.POINTER;
@@ -368,7 +368,7 @@ export default class Logger {
     this.logStep({...logVar});
     this.scopedStates.peek().push({...logVar});
 
-    return new LoggedIndex<T>(value, id, this);
+    return new LoggedVariable<T>(value, id, this);
   }
 
   public static registerAndWrite(o: any, logFile: string) {
